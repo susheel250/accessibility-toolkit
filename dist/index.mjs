@@ -140,7 +140,7 @@ const descriptor = Object.freeze({
 			"label": "Accessibility Statement URL",
 			"description": "Full URL or relative path to your website accessibility statement.",
 			"type": "url",
-			"default": "https://ishpemingtownship.com/accessibility-statement"
+			"default": "/accessibility-statement"
 		}
 	}
 });

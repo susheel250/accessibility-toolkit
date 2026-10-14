@@ -1,5 +1,6 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
+import { validateBlockResponse } from "@emdash-cms/blocks/server";
 import fs from "node:fs";
 import path from "node:path";
 import plugin, {
@@ -149,6 +150,10 @@ describe("Coddle Accessibility Toolkit - Comprehensive Test Suite", () => {
 		assert.ok(form);
 		assert.equal(form.submit.action_id, "save_settings");
 		assert.equal(form.fields.length, 8);
+
+		// Schema validation against EmDash Block Kit policy
+		const validation = validateBlockResponse(result);
+		assert.equal(validation.valid, true, `Block validation failed: ${JSON.stringify(validation.errors)}`);
 	});
 
 	test("admin route handles form_submit, validates input, and persists settings", async () => {
@@ -173,6 +178,9 @@ describe("Coddle Accessibility Toolkit - Comprehensive Test Suite", () => {
 		const result = await plugin.routes.admin.handler({ input: updatePayload }, mockCtx);
 		assert.ok(result.toast);
 		assert.equal(result.toast.type, "success");
+
+		const submitValidation = validateBlockResponse(result);
+		assert.equal(submitValidation.valid, true, `Block submit validation failed: ${JSON.stringify(submitValidation.errors)}`);
 		assert.ok(result.toast.message.includes("Settings saved successfully"));
 
 		// Verify stored values in ctx.settings

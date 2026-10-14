@@ -146,7 +146,7 @@ declare const elements: {
     multiline: boolean | undefined;
   };
 };
-declare function renderAdminBlocks(settings: CoddleAccessSettings): ({
+declare function renderAdminBlocks(settings: CoddleAccessSettings, previewUrl?: string): ({
   type: "header";
   text: string;
 } | {

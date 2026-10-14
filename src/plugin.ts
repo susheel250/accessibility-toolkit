@@ -170,14 +170,26 @@ export const elements = {
 	}),
 };
 
-export function renderAdminBlocks(settings: CoddleAccessSettings) {
+export function renderAdminBlocks(
+	settings: CoddleAccessSettings,
+	previewUrl: string = "https://coddletech.com",
+) {
+	const validPreviewUrl =
+		previewUrl.startsWith("http://") || previewUrl.startsWith("https://")
+			? previewUrl
+			: "https://coddletech.com";
+
 	return [
 		blocks.header("Coddle Accessibility Toolkit"),
 		blocks.context(
 			"Admin / Plugins / Coddle Accessibility — Customize the language, colour, icon, dimensions, and positioning of the official Coddle Accessibility Toolkit.",
 		),
 		blocks.actions([
-			elements.link("Preview Frontend ↗", { kind: "external", url: "/" }, { appearance: "secondary" }),
+			elements.link(
+				"Preview Frontend ↗",
+				{ kind: "external", url: validPreviewUrl },
+				{ appearance: "secondary" },
+			),
 		]),
 		blocks.banner({
 			title: "Coddle Access Suite — WCAG 2.2 Level AA",
@@ -302,10 +314,23 @@ const plugin: SandboxedPlugin = {
 				const input = (routeCtx.input as any) || {};
 				const currentSettings = await loadSavedSettings(ctx.settings);
 
+				let previewUrl = "https://coddletech.com";
+				try {
+					const rawUrl = (routeCtx as any)?.url;
+					if (rawUrl) {
+						const parsed = new URL(rawUrl);
+						if (parsed.origin && (parsed.protocol === "http:" || parsed.protocol === "https:")) {
+							previewUrl = parsed.origin + "/";
+						}
+					}
+				} catch {
+					// Fallback
+				}
+
 				// 1. Initial page load
 				if (input.type === "page_load") {
 					return {
-						blocks: renderAdminBlocks(currentSettings),
+						blocks: renderAdminBlocks(currentSettings, previewUrl),
 					};
 				}
 
@@ -342,7 +367,7 @@ const plugin: SandboxedPlugin = {
 									description: validationErrors.join("; "),
 									variant: "error",
 								}),
-								...renderAdminBlocks(currentSettings),
+								...renderAdminBlocks(currentSettings, previewUrl),
 							],
 							toast: {
 								message: validationErrors[0],
@@ -379,7 +404,7 @@ const plugin: SandboxedPlugin = {
 					});
 
 					return {
-						blocks: renderAdminBlocks(updatedSettings),
+						blocks: renderAdminBlocks(updatedSettings, previewUrl),
 						toast: {
 							message: "✓ Settings saved successfully",
 							type: "success",
@@ -389,7 +414,7 @@ const plugin: SandboxedPlugin = {
 
 				// 3. Fallback for other block actions
 				return {
-					blocks: renderAdminBlocks(currentSettings),
+					blocks: renderAdminBlocks(currentSettings, previewUrl),
 				};
 			},
 		},

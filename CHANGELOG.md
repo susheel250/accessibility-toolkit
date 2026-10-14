@@ -2,29 +2,24 @@
 
 All notable changes to the Coddle Access accessibility widget will be documented in this file.
 
-## [1.2.1] - 2026-10-14
-
-### Changed
-- Replaced public marketplace listing screenshot with a clean, neutral demonstration showcase.
-
 ## [1.2.0] - 2026-10-13
 
 ### Added
-- Complete UI redesign with modern, accessible cards and squircle components.
-- Modern Coddle Blue gradient header with frosted glass action controls for reset and close.
-- Custom Coddle Access emblem SVG badge in menu header.
-- Custom squircle minus/plus buttons for Font Size adjustment with tabular percentage indicator.
-- Multi-state progress segments indicator for Text Alignment cycler.
-- Elevated card styling for custom language dropdown selector.
-- Standalone distribution packaging with `package.json`, `README.md`, `LICENSE`, and `CHANGELOG.md`.
+- Introduced an updated widget interface with modern cards, rounded controls, and consistent styling.
+- Added a Coddle Blue gradient header with reset and close controls.
+- Added a custom Coddle Access SVG emblem to the widget header.
+- Added improved font-size controls with a percentage indicator.
+- Added a segmented indicator for text-alignment controls.
+- Enhanced the language selector with updated dropdown styling.
+- Added standalone package documentation and distribution files.
 
-### Changed
-- Preserved 100% of existing accessibility features, event listeners, and state persistence keys.
-- Optimized responsive layouts across desktop (440px), tablet (max 560px), and mobile (max 420px).
-- Refined focus visible rings and active states for WCAG 2.2 Level AA compliance.
+### Improved
+- Maintained existing accessibility features, event listeners, and state persistence.
+- Improved responsive layouts for desktop, tablet, and mobile devices.
+- Refined keyboard focus indicators and interactive states for improved usability.
 
 ## [1.1.0] - 2026-10-12
 
 ### Added
-- Rebranding of accessibility toolkit to Coddle Access / Coddle Technologies.
-- Bundled local OpenDyslexic font assets with automatic fallback to CDN.
+- Introduced Coddle Access branding by Coddle Technologies.
+- Bundled OpenDyslexic font assets locally with a CDN fallback.

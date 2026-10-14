@@ -106,8 +106,9 @@ const config = {
 {enabled && (
   <script is:inline define:vars={{ config, fontsUrl, scriptSrc }}>
     (function() {
-      if (window.__coddle_access_initialized) return;
+      if (window.__coddle_access_initialized || window.__accessiyes_initialized) return;
       window.__coddle_access_initialized = true;
+      window.__accessiyes_initialized = true;
 
       window._cyA11yConfig = config;
       window._cyA11yAssets = {
@@ -115,12 +116,12 @@ const config = {
       };
 
       if (!document.getElementById("coddle-access-script")) {
-        const script = document.createElement("script");
+        var script = document.createElement("script");
         script.id = "coddle-access-script";
         script.type = "text/javascript";
         script.src = scriptSrc;
         script.async = true;
-        document.body ? document.body.appendChild(script) : document.head.appendChild(script);
+        (document.body || document.head).appendChild(script);
       }
     })();
   </script>

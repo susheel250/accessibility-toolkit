@@ -3,11 +3,11 @@
 
 	"slug": "coddle-access",
 	"publisher": "did:plc:pcngdskjcwsettdojdho2dtr",
-	"version": "1.2.1",
+	"version": "1.3.0",
 	"license": "MIT",
 
 	"name": "Coddle Accessibility Toolkit",
-	"description": "Web accessibility toolkit with profiles, contrast, typography, screen reader, and WCAG tools.",
+	"description": "Comprehensive web accessibility toolkit for EmDash CMS websites - WCAG 2.2 AA and ADA Section 508 compliance.",
 	"keywords": ["accessibility", "a11y", "wcag", "coddle", "compliance"],
 
 	"author": {
@@ -26,6 +26,13 @@
 	"storage": {},
 
 	"admin": {
+		"pages": [
+			{
+				"path": "/settings",
+				"label": "Coddle Accessibility",
+				"icon": "accessibility"
+			}
+		],
 		"settingsSchema": {
 			"enabled": {
 				"type": "boolean",
@@ -33,9 +40,29 @@
 				"description": "Toggle the public Coddle Access widget on or off.",
 				"default": true
 			},
+			"language": {
+				"type": "select",
+				"label": "Widget Language",
+				"description": "Default interface language for the Coddle Accessibility menu.",
+				"options": [
+					{ "value": "en", "label": "English" },
+					{ "value": "es", "label": "Spanish (Español)" },
+					{ "value": "fr", "label": "French (Français)" },
+					{ "value": "de", "label": "German (Deutsch)" },
+					{ "value": "it", "label": "Italian (Italiano)" },
+					{ "value": "pt", "label": "Portuguese (Português)" },
+					{ "value": "nl", "label": "Dutch (Nederlands)" },
+					{ "value": "pl", "label": "Polish (Polski)" },
+					{ "value": "da", "label": "Danish (Dansk)" },
+					{ "value": "sv", "label": "Swedish (Svenska)" },
+					{ "value": "no", "label": "Norwegian (Norsk)" },
+					{ "value": "fi", "label": "Finnish (Suomi)" }
+				],
+				"default": "en"
+			},
 			"primaryColor": {
 				"type": "string",
-				"label": "Brand Color",
+				"label": "Widget Colour",
 				"description": "Primary accent hex color for the widget button and active highlights (e.g. #1863DC).",
 				"default": "#1863DC"
 			},
@@ -44,16 +71,17 @@
 				"label": "Launcher Icon",
 				"description": "Visual icon displayed inside the floating launcher button.",
 				"options": [
-					{ "value": "person", "label": "Accessibility Person" },
-					{ "value": "wheelchair", "label": "Wheelchair / Mobility" },
-					{ "value": "universal-access", "label": "Universal Access Symbol" }
+					{ "value": "default", "label": "Default (Coddle Access Figure)" },
+					{ "value": "accessibility", "label": "Universal Access" },
+					{ "value": "assist", "label": "Assist / Help" },
+					{ "value": "wheel", "label": "Wheelchair" }
 				],
-				"default": "person"
+				"default": "default"
 			},
 			"iconSize": {
 				"type": "number",
 				"label": "Button Size (px)",
-				"description": "Diameter of the floating launcher button (24 to 80 px).",
+				"description": "Diameter of the floating launcher button (40 = Small, 48 = Medium, 56 = Large).",
 				"default": 48,
 				"min": 24,
 				"max": 80
@@ -81,12 +109,6 @@
 					{ "value": "top-left", "label": "Top Left" }
 				],
 				"default": "bottom-right"
-			},
-			"language": {
-				"type": "string",
-				"label": "Default Language",
-				"description": "Two-letter language code for initial widget display (e.g. en, es, fr, de, he).",
-				"default": "en"
 			},
 			"statementUrl": {
 				"type": "url",

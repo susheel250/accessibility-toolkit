@@ -7,7 +7,7 @@
 /** @type {import("emdash").PluginDescriptor} */
 const descriptor = Object.freeze({
 	"id": "coddle-access",
-	"version": "1.2.1",
+	"version": "1.3.0",
 	"format": "standard",
 	"entrypoint": "coddle-access/sandbox",
 	"capabilities": [],
@@ -19,6 +19,13 @@ const descriptor = Object.freeze({
 		"plugin:deactivate"
 	],
 	"routes": [
+		{
+			"name": "admin",
+			"methods": [
+				"POST"
+			],
+			"public": false
+		},
 		{
 			"name": "config",
 			"methods": [
@@ -41,6 +48,13 @@ const descriptor = Object.freeze({
 			"public": true
 		}
 	],
+	"adminPages": [
+		{
+			"path": "/settings",
+			"label": "Coddle Accessibility",
+			"icon": "accessibility"
+		}
+	],
 	"settingsSchema": {
 		"enabled": {
 			"label": "Enable Accessibility Widget",
@@ -48,8 +62,64 @@ const descriptor = Object.freeze({
 			"type": "boolean",
 			"default": true
 		},
+		"language": {
+			"label": "Widget Language",
+			"description": "Default interface language for the Coddle Accessibility menu.",
+			"type": "select",
+			"options": [
+				{
+					"value": "en",
+					"label": "English"
+				},
+				{
+					"value": "es",
+					"label": "Spanish (Español)"
+				},
+				{
+					"value": "fr",
+					"label": "French (Français)"
+				},
+				{
+					"value": "de",
+					"label": "German (Deutsch)"
+				},
+				{
+					"value": "it",
+					"label": "Italian (Italiano)"
+				},
+				{
+					"value": "pt",
+					"label": "Portuguese (Português)"
+				},
+				{
+					"value": "nl",
+					"label": "Dutch (Nederlands)"
+				},
+				{
+					"value": "pl",
+					"label": "Polish (Polski)"
+				},
+				{
+					"value": "da",
+					"label": "Danish (Dansk)"
+				},
+				{
+					"value": "sv",
+					"label": "Swedish (Svenska)"
+				},
+				{
+					"value": "no",
+					"label": "Norwegian (Norsk)"
+				},
+				{
+					"value": "fi",
+					"label": "Finnish (Suomi)"
+				}
+			],
+			"default": "en"
+		},
 		"primaryColor": {
-			"label": "Brand Color",
+			"label": "Widget Colour",
 			"description": "Primary accent hex color for the widget button and active highlights (e.g. #1863DC).",
 			"type": "string",
 			"default": "#1863DC"
@@ -60,23 +130,27 @@ const descriptor = Object.freeze({
 			"type": "select",
 			"options": [
 				{
-					"value": "person",
-					"label": "Accessibility Person"
+					"value": "default",
+					"label": "Default (Coddle Access Figure)"
 				},
 				{
-					"value": "wheelchair",
-					"label": "Wheelchair / Mobility"
+					"value": "accessibility",
+					"label": "Universal Access"
 				},
 				{
-					"value": "universal-access",
-					"label": "Universal Access Symbol"
+					"value": "assist",
+					"label": "Assist / Help"
+				},
+				{
+					"value": "wheel",
+					"label": "Wheelchair"
 				}
 			],
-			"default": "person"
+			"default": "default"
 		},
 		"iconSize": {
 			"label": "Button Size (px)",
-			"description": "Diameter of the floating launcher button (24 to 80 px).",
+			"description": "Diameter of the floating launcher button (40 = Small, 48 = Medium, 56 = Large).",
 			"type": "number",
 			"default": 48,
 			"min": 24,
@@ -129,12 +203,6 @@ const descriptor = Object.freeze({
 				}
 			],
 			"default": "bottom-right"
-		},
-		"language": {
-			"label": "Default Language",
-			"description": "Two-letter language code for initial widget display (e.g. en, es, fr, de, he).",
-			"type": "string",
-			"default": "en"
 		},
 		"statementUrl": {
 			"label": "Accessibility Statement URL",

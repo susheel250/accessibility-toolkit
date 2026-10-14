@@ -1,6 +1,6 @@
 {
 	"name": "coddle-access",
-	"version": "1.2.0",
+	"version": "1.2.1",
 	"description": "Coddle Access - Accessible, lightweight, customizable web accessibility widget for EmDash CMS by Coddle Technologies",
 	"private": true,
 	"type": "module",

@@ -40,7 +40,7 @@ describe("Coddle Accessibility Toolkit - Sandboxed Plugin", () => {
 		const manifest = JSON.parse(jsonClean);
 
 		assert.equal(manifest.slug, "coddle-access");
-		assert.equal(manifest.version, "1.2.0");
+		assert.equal(manifest.version, "1.2.1");
 		assert.equal(manifest.license, "MIT");
 		assert.equal(manifest.name, "Coddle Accessibility Toolkit");
 		assert.ok(manifest.publisher.startsWith("did:plc:"));

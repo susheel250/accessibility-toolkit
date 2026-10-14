@@ -7,7 +7,7 @@
 /** @type {import("emdash").PluginDescriptor} */
 const descriptor = Object.freeze({
 	"id": "coddle-access",
-	"version": "1.2.0",
+	"version": "1.2.1",
 	"format": "standard",
 	"entrypoint": "coddle-access/sandbox",
 	"capabilities": [],

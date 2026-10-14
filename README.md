@@ -4,7 +4,7 @@
 
 [![EmDash Plugin](https://img.shields.io/badge/EmDash-Plugin-blue.svg)](https://emdashcms.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version: 1.2.0](https://img.shields.io/badge/Version-1.2.0-indigo.svg)](CHANGELOG.md)
+[![Version: 1.2.1](https://img.shields.io/badge/Version-1.2.1-indigo.svg)](CHANGELOG.md)
 
 ---
 

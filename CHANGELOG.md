@@ -2,6 +2,11 @@
 
 All notable changes to the Coddle Access accessibility widget will be documented in this file.
 
+## [1.2.1] - 2026-10-14
+
+### Changed
+- Replaced public marketplace listing screenshot with a clean, neutral demonstration showcase.
+
 ## [1.2.0] - 2026-10-13
 
 ### Added

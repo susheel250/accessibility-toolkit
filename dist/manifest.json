@@ -1,6 +1,6 @@
 {
   "id": "coddle-access",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "declaredAccess": {},
   "capabilities": [],
   "allowedHosts": [],

@@ -3,7 +3,7 @@
 
 	"slug": "coddle-access",
 	"publisher": "did:plc:pcngdskjcwsettdojdho2dtr",
-	"version": "1.2.0",
+	"version": "1.2.1",
 	"license": "MIT",
 
 	"name": "Coddle Accessibility Toolkit",

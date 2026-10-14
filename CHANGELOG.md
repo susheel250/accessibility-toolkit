@@ -16,6 +16,11 @@ All notable changes to the Coddle Access widget will be documented in this file.
 - Added backward-compatibility mapping for legacy icon and positioning identifiers.
 - Added duplicate-initialization protection to companion Astro component.
 
+## [1.2.1] - 2026-10-14
+
+### Changed
+- Replaced public marketplace listing screenshot with a clean, neutral demonstration showcase.
+
 ## [1.2.0] - 2026-10-13
 
 ### Added

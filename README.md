@@ -4,7 +4,7 @@
 
 [![EmDash Plugin](https://img.shields.io/badge/EmDash-Plugin-blue.svg)](https://emdashcms.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version: 1.2.1](https://img.shields.io/badge/Version-1.2.1-indigo.svg)](CHANGELOG.md)
+[![Version: 1.3.0](https://img.shields.io/badge/Version-1.3.0-indigo.svg)](CHANGELOG.md)
 
 ---
 
@@ -34,7 +34,7 @@ EmDash uses an isolated `workerd` sandbox runtime for registry-published plugins
 | :--- | :--- | :--- |
 | **Execution Environment** | Cloudflare `workerd` sandbox | Node.js host process |
 | **Trust Contract** | `capabilities: []`, `allowedHosts: []` (zero-privilege) | Full host process access (`format: "native"`) |
-| **Settings UI** | Declarative `admin.settingsSchema` in EmDash Admin | Custom interactive React canvas with live preview |
+| **Settings UI** | Custom Block Kit admin at `/settings` + `admin.settingsSchema` | Custom interactive React canvas with live preview |
 | **Configuration API** | Public route `GET /api/plugins/coddle-access/config` | Direct SQLite queries on `options` table |
 | **DOM Delivery** | Theme embed snippet (`GET /api/plugins/coddle-access/snippet`) | Direct Astro `<CoddleAccessWidget />` layout injection |
 
@@ -43,7 +43,7 @@ EmDash uses an isolated `workerd` sandbox runtime for registry-published plugins
 In EmDash, the `page:fragments` hook (which injects raw HTML fragments into visitor pages) is restricted to trusted host plugins to protect visitor DOM integrity. 
 
 Therefore, sandboxed registry plugins provide:
-1. **Administrative Configuration**: Managed directly in EmDash Settings through `admin.settingsSchema`.
+1. **Administrative Configuration**: Managed directly in EmDash Settings through `admin.pages` (/settings) and `admin.settingsSchema`.
 2. **Configuration API**: Accessible by client scripts via `/api/plugins/coddle-access/config`.
 3. **Embed Options**: Either add the generated embed snippet to your theme layout, or use the optional native companion `<CoddleAccessWidget />` in Astro themes.
 
@@ -56,12 +56,12 @@ The following settings are configurable from the EmDash Admin Settings page:
 | Setting Key | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
 | `enabled` | `boolean` | `true` | Toggle the public Coddle Access widget on or off. |
-| `primaryColor` | `string` | `"#1976d2"` | Hex brand accent color for launcher and active highlights. |
-| `iconId` | `select` | `"person"` | Launcher icon style (`person`, `wheelchair`, `universal-access`). |
-| `iconSize` | `number` | `44` | Diameter of the floating launcher button in pixels (24–80 px). |
+| `primaryColor` | `string` | `"#1863DC"` | Hex brand accent color for launcher and active highlights. |
+| `iconId` | `select` | `"default"` | Launcher icon style (`default`, `accessibility`, `assist`, `wheel`). |
+| `iconSize` | `number` | `48` | Diameter of the floating launcher button in pixels (40, 48, 56). |
 | `positionDesktop` | `select` | `"bottom-right"` | Screen corner on desktop (`bottom-right`, `bottom-left`, `top-right`, `top-left`). |
 | `positionMobile` | `select` | `"bottom-right"` | Screen corner on mobile devices (`bottom-right`, `bottom-left`, `top-right`, `top-left`). |
-| `language` | `string` | `"en"` | Initial widget interface language code (`en`, `es`, `fr`, etc.). |
+| `language` | `select` | `"en"` | Initial widget interface language code (12 supported languages). |
 | `statementUrl` | `url` | `"/accessibility-statement"` | Organization accessibility statement link. |
 
 ---

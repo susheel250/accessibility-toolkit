@@ -444,9 +444,10 @@ const plugin: SandboxedPlugin = {
 					cdnHtml: `<script src="https://cdn.jsdelivr.net/npm/@coddletech/access-widget@1.2.0/js/widget.min.js" onerror="this.onerror=null;this.src='/vendor/coddle-access/js/widget.min.js';" data-color="${settings.primaryColor}" data-position="${settings.positionDesktop}" data-lang="${settings.language}" async></script>`,
 					dynamicLoader: `<script>
 (function() {
-  fetch('/api/plugins/coddle-access/config')
+  fetch('/_emdash/api/plugins/${ctx.plugin.id}/config')
     .then(function(r) { return r.json(); })
-    .then(function(cfg) {
+    .then(function(res) {
+      var cfg = (res && res.data) || res;
       if (!cfg || !cfg.enabled) return;
       window._cyA11yConfig = {
         primaryColor: cfg.primaryColor,
@@ -462,7 +463,7 @@ const plugin: SandboxedPlugin = {
       var s = document.createElement('script');
       s.src = '/vendor/coddle-access/js/widget.min.js';
       s.async = true;
-      document.body ? document.body.appendChild(s) : document.head.appendChild(s);
+      (document.body || document.head).appendChild(s);
     });
 })();
 </script>`,

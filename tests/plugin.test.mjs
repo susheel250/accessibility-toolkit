@@ -262,7 +262,7 @@ describe("Coddle Accessibility Toolkit - Comprehensive Test Suite", () => {
 		assert.ok(result.html.includes("data-color=\"#0D9488\""));
 		assert.ok(result.html.includes("data-position=\"bottom-left\""));
 		assert.ok(result.html.includes("data-lang=\"fr\""));
-		assert.ok(result.dynamicLoader.includes("fetch('/api/plugins/coddle-access/config')"));
+		assert.ok(result.dynamicLoader.includes(`fetch('/_emdash/api/plugins/${mockCtx.plugin.id}/config')`));
 	});
 
 	test("status route returns active plugin health telemetry", async () => {

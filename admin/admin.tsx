@@ -1,4 +1,3 @@
-// src/plugins/accessibility/admin.tsx
 // Official Coddle Access Admin Interface for EmDash CMS
 import React, { useState, useEffect, useRef } from "react";
 
@@ -23,8 +22,22 @@ export const DEFAULT_SETTINGS: CoddleAccessSettings = {
   iconSize: 48,
   positionDesktop: 'bottom-right',
   positionMobile: 'bottom-right',
-  statementUrl: '',
+  statementUrl: '/accessibility-statement',
 };
+
+export function getPluginCandidateIds(): string[] {
+  const ids: string[] = ["coddle-access"];
+  if (typeof window !== "undefined" && window.location?.pathname) {
+    const match = window.location.pathname.match(/(?:plugins|plugins-manager)\/([^/?#]+)/);
+    if (match && match[1] && !["marketplace", "registry"].includes(match[1])) {
+      ids.unshift(match[1]);
+    }
+  }
+  if (!ids.includes("accessibility")) {
+    ids.push("accessibility");
+  }
+  return Array.from(new Set(ids));
+}
 
 export const SUPPORTED_LANGUAGES = [
   { code: 'en', name: 'English' },
@@ -104,14 +117,14 @@ export function RenderIconSvg({ iconId, size = 28, color = 'currentColor' }: { i
 }
 
 export function CoddleAccessAdminPage() {
-  const [enabled, setEnabled] = useState<boolean>(true);
-  const [language, setLanguage] = useState<string>('en');
-  const [primaryColor, setPrimaryColor] = useState<string>('#1863DC');
-  const [iconId, setIconId] = useState<'default' | 'accessibility' | 'assist' | 'wheel'>('default');
-  const [iconSize, setIconSize] = useState<number>(48);
-  const [positionDesktop, setPositionDesktop] = useState<'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'>('bottom-right');
-  const [positionMobile, setPositionMobile] = useState<'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'>('bottom-right');
-  const [statementUrl, setStatementUrl] = useState<string>('');
+  const [enabled, setEnabled] = useState<boolean>(DEFAULT_SETTINGS.enabled);
+  const [language, setLanguage] = useState<string>(DEFAULT_SETTINGS.language);
+  const [primaryColor, setPrimaryColor] = useState<string>(DEFAULT_SETTINGS.primaryColor);
+  const [iconId, setIconId] = useState<'default' | 'accessibility' | 'assist' | 'wheel'>(DEFAULT_SETTINGS.iconId);
+  const [iconSize, setIconSize] = useState<number>(DEFAULT_SETTINGS.iconSize);
+  const [positionDesktop, setPositionDesktop] = useState<'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'>(DEFAULT_SETTINGS.positionDesktop);
+  const [positionMobile, setPositionMobile] = useState<'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'>(DEFAULT_SETTINGS.positionMobile);
+  const [statementUrl, setStatementUrl] = useState<string>(DEFAULT_SETTINGS.statementUrl);
 
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
@@ -125,36 +138,83 @@ export function CoddleAccessAdminPage() {
       setError(null);
       
       let data: any = null;
-      try {
-        const res = await fetch("/api/admin/accessibility", { cache: "no-store" });
-        if (res.ok) {
-          const json = await res.json();
-          data = json.settings || json.data || json;
-        }
-      } catch {
-        // fallback
-      }
+      const candidateIds = getPluginCandidateIds();
 
-      if (!data) {
+      // 1. Try official EmDash plugin settings API
+      for (const id of candidateIds) {
         try {
-          const res2 = await fetch("/_emdash/api/admin/plugins/accessibility/settings", { cache: "no-store" });
-          if (res2.ok) {
-            const json2 = await res2.json();
-            data = json2.data?.values || json2.values || json2;
+          const res = await fetch(`/_emdash/api/admin/plugins/${id}/settings`, {
+            cache: "no-store",
+            headers: {
+              "Accept": "application/json",
+              "X-EmDash-Request": "1",
+            },
+          });
+          if (res.ok) {
+            const json = await res.json();
+            const values = json.data?.values || json.values;
+            if (values && typeof values === 'object' && Object.keys(values).length > 0) {
+              data = values;
+              break;
+            }
           }
         } catch {
-          // ignore
+          // try next
+        }
+      }
+
+      // 2. Try plugin config route if settings store endpoint not found
+      if (!data) {
+        for (const id of candidateIds) {
+          try {
+            const res = await fetch(`/_emdash/api/plugins/${id}/config`, {
+              cache: "no-store",
+              headers: { "Accept": "application/json" },
+            });
+            if (res.ok) {
+              const json = await res.json();
+              const cfg = json.data || json;
+              if (cfg && typeof cfg === 'object' && Object.keys(cfg).length > 0) {
+                data = cfg;
+                break;
+              }
+            }
+          } catch {
+            // try next
+          }
+        }
+      }
+
+      // 3. Fallback to legacy custom route (e.g. Ishpeming Township)
+      if (!data) {
+        try {
+          const res = await fetch("/api/admin/accessibility", { cache: "no-store" });
+          if (res.ok) {
+            const json = await res.json();
+            data = json.settings || json.data || json;
+          }
+        } catch {
+          // fallback ignore
         }
       }
 
       if (data) {
         if (typeof data.enabled === 'boolean') setEnabled(data.enabled);
-        if (data.language) setLanguage(data.language);
-        if (data.primaryColor) setPrimaryColor(data.primaryColor);
-        if (data.iconId) setIconId(data.iconId);
-        if (data.iconSize) setIconSize(Number(data.iconSize));
-        if (data.positionDesktop) setPositionDesktop(data.positionDesktop);
-        if (data.positionMobile) setPositionMobile(data.positionMobile);
+        if (typeof data.language === 'string' && data.language) setLanguage(data.language);
+        if (typeof data.primaryColor === 'string' && data.primaryColor) setPrimaryColor(toValid7CharHex(data.primaryColor));
+        if (typeof data.iconId === 'string' && ['default', 'accessibility', 'assist', 'wheel'].includes(data.iconId)) {
+          setIconId(data.iconId as any);
+        }
+        if (data.iconSize !== undefined && data.iconSize !== null) {
+          const sz = Number(data.iconSize);
+          if ([40, 48, 56].includes(sz)) setIconSize(sz);
+        }
+        if (typeof data.positionDesktop === 'string' && ['bottom-right', 'bottom-left', 'top-right', 'top-left'].includes(data.positionDesktop)) {
+          setPositionDesktop(data.positionDesktop as any);
+        }
+        if (typeof data.positionMobile === 'string' && ['bottom-right', 'bottom-left', 'top-right', 'top-left'].includes(data.positionMobile)) {
+          setPositionMobile(data.positionMobile as any);
+        }
         if (typeof data.statementUrl === 'string') setStatementUrl(data.statementUrl);
       }
     } catch (err: any) {
@@ -184,12 +244,13 @@ export function CoddleAccessAdminPage() {
       setMessage(null);
       setError(null);
 
-      // Validate URL if present
+      // Validate URL if present (supports relative paths like /accessibility-statement and absolute URLs)
       if (statementUrl && statementUrl.trim()) {
-        try {
-          new URL(statementUrl.trim());
-        } catch {
-          setError("Accessibility Statement URL must be a valid URL (e.g. https://example.com/accessibility).");
+        const cleanUrl = statementUrl.trim();
+        const isRelative = cleanUrl.startsWith("/");
+        const isAbsolute = /^https?:\/\//i.test(cleanUrl);
+        if (!isRelative && !isAbsolute) {
+          setError("Accessibility Statement URL must be a valid URL or path (e.g. /accessibility-statement or https://example.com/accessibility-statement).");
           setSaving(false);
           return;
         }
@@ -215,41 +276,53 @@ export function CoddleAccessAdminPage() {
         statementUrl: statementUrl.trim(),
       };
 
-      // 1. Post to /api/admin/accessibility
       let success = false;
       let errorMsg = "Unable to save settings. Please try again.";
+      const candidateIds = getPluginCandidateIds();
 
+      // 1. Save to official EmDash plugin settings endpoint (PUT /_emdash/api/admin/plugins/:id/settings)
+      for (const id of candidateIds) {
+        try {
+          const res = await fetch(`/_emdash/api/admin/plugins/${id}/settings`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+              "X-EmDash-Request": "1",
+            },
+            body: JSON.stringify({ values: payload }),
+          });
+          if (res.ok) {
+            const data = await res.json().catch(() => ({}));
+            if (data.success !== false) {
+              success = true;
+              break;
+            }
+          }
+        } catch {
+          // try next candidate
+        }
+      }
+
+      // 2. Also sync to legacy custom endpoint if present on server (e.g. Ishpeming Township /api/admin/accessibility)
       try {
         const res = await fetch("/api/admin/accessibility", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "Accept": "application/json",
+            "X-EmDash-Request": "1",
           },
           body: JSON.stringify(payload),
         });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          success = true;
-        } else if (data.error) {
-          errorMsg = data.error;
+        if (res.ok) {
+          const data = await res.json().catch(() => ({}));
+          if (data.success) {
+            success = true;
+          }
         }
-      } catch (postErr: any) {
-        errorMsg = postErr?.message || errorMsg;
-      }
-
-      // 2. Also sync to EmDash native plugin settings endpoint if available
-      try {
-        await fetch("/_emdash/api/admin/plugins/accessibility/settings", {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-          },
-          body: JSON.stringify({ values: payload }),
-        });
       } catch {
-        // Non-blocking
+        // Non-blocking fallback
       }
 
       if (!success) {
@@ -1104,7 +1177,7 @@ export function CoddleAccessAdminPage() {
                 Accessibility Statement URL
               </label>
               <p style={{ fontSize: "0.9rem", color: "#64748b", margin: "0 0 1rem 0" }}>
-                Optional URL to your township's official accessibility statement or compliance page.
+                Optional URL to your website's official accessibility statement or compliance page.
               </p>
 
               <input

@@ -120,6 +120,7 @@ export const blocks = {
 		type: "fields" as const,
 		fields: fieldsList,
 	}),
+	divider: () => ({ type: "divider" as const }),
 };
 
 export const elements = {
@@ -182,7 +183,7 @@ export function renderAdminBlocks(
 	return [
 		blocks.header("Coddle Accessibility Toolkit"),
 		blocks.context(
-			"Admin / Plugins / Coddle Accessibility — Customize the language, colour, icon, dimensions, and positioning of the official Coddle Accessibility Toolkit.",
+			"Customize the language, colour, icon, dimensions, and positioning of the official Coddle Accessibility Toolkit.",
 		),
 		blocks.actions([
 			elements.link(
@@ -233,16 +234,17 @@ export function renderAdminBlocks(
 				action_id: "save_settings",
 			},
 		}),
+		blocks.divider(),
 		blocks.fields([
 			{
 				label: "Quick Palette Suggestions",
 				value:
-					"Default: #1863DC | Ishpeming: #0369A1 | Teal: #0D9488 | Indigo: #4F46E5 | Emerald: #16A34A | Dark: #0F172A",
+					"Default: #1863DC | Ishpeming: #0369A1 | Teal: #0D9488 | Indigo: #4F46E5 | Emerald: #16A34A | Slate: #0F172A",
 			},
 			{
 				label: "Compliance & Integration",
 				value:
-					"WCAG 2.2 AA / ADA Section 508 • Self-contained EmDash Plugin Registry Package",
+					"WCAG 2.2 AA / ADA Section 508 • Coddle Access Suite for EmDash CMS websites",
 			},
 		]),
 	];
@@ -426,7 +428,7 @@ const plugin: SandboxedPlugin = {
 
 				return {
 					...settings,
-					version: "1.3.0",
+					version: "1.3.1",
 					toolkit: "Coddle Accessibility Toolkit",
 					publisher: "Coddle Technologies",
 				};
@@ -478,7 +480,7 @@ const plugin: SandboxedPlugin = {
 				return {
 					status: "active",
 					pluginId: ctx.plugin.id,
-					version: "1.3.0",
+					version: "1.3.1",
 					brand: "Coddle Access",
 					vendor: "Coddle Technologies",
 					website: "https://coddletech.com",

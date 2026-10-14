@@ -7,7 +7,7 @@
 /** @type {import("emdash").PluginDescriptor} */
 const descriptor = Object.freeze({
 	"id": "coddle-access",
-	"version": "1.3.0",
+	"version": "1.3.1",
 	"format": "standard",
 	"entrypoint": "coddle-access/sandbox",
 	"capabilities": [],
@@ -207,7 +207,7 @@ const descriptor = Object.freeze({
 		"statementUrl": {
 			"label": "Accessibility Statement URL",
 			"description": "Full URL or relative path to your website accessibility statement.",
-			"type": "url",
+			"type": "string",
 			"default": "/accessibility-statement"
 		}
 	}

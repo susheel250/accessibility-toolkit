@@ -82,6 +82,9 @@ declare const blocks: {
       value: string;
     }[];
   };
+  divider: () => {
+    type: "divider";
+  };
 };
 declare const elements: {
   link: (label: string, target: {
@@ -173,6 +176,8 @@ declare function renderAdminBlocks(settings: CoddleAccessSettings, previewUrl?: 
     label: string;
     value: string;
   }[];
+} | {
+  type: "divider";
 })[];
 /**
  * Coddle Accessibility Toolkit - Sandboxed EmDash Plugin Entrypoint

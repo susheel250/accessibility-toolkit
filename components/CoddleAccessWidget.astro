@@ -1,0 +1,127 @@
+---
+// components/CoddleAccessWidget.astro
+// Standalone Coddle Accessibility Toolkit Astro Companion Component
+// Compatible with any Astro or EmDash site
+
+interface Props {
+  enabled?: boolean;
+  language?: string;
+  primaryColor?: string;
+  iconId?: "default" | "accessibility" | "assist" | "wheel";
+  iconSize?: number;
+  positionDesktop?: "bottom-right" | "bottom-left" | "top-right" | "top-left";
+  positionMobile?: "bottom-right" | "bottom-left" | "top-right" | "top-left";
+  statementUrl?: string;
+  scriptSrc?: string;
+  fontsUrl?: string;
+  companyName?: string;
+  website?: string;
+}
+
+const {
+  enabled = true,
+  language = "en",
+  primaryColor = "#1863DC",
+  iconId = "default",
+  iconSize = 48,
+  positionDesktop = "bottom-right",
+  positionMobile = "bottom-right",
+  statementUrl = "",
+  scriptSrc = "/vendor/coddle-access/js/widget.min.js",
+  fontsUrl = "/vendor/coddle-access/fonts/",
+  companyName = "",
+  website = "",
+} = Astro.props;
+
+const config = {
+  status: {
+    mobile: true,
+    desktop: true,
+  },
+  iconId: iconId,
+  iconSize: Number(iconSize),
+  label: "Coddle Accessibility widget",
+  heading: "Coddle Access",
+  position: {
+    mobile: positionMobile,
+    desktop: positionDesktop,
+  },
+  language: {
+    default: language,
+    selected: [],
+  },
+  margins: {
+    desktop: { top: 20, bottom: 20, left: 20, right: 20 },
+    mobile: { top: 20, bottom: 20, left: 20, right: 20 },
+  },
+  primaryColor: primaryColor,
+  keyboard: {
+    enabled: true,
+    shortcut: "alt+a",
+  },
+  modules: {
+    color: {
+      darkContrast: { enabled: true },
+      lightContrast: { enabled: true },
+      highContrast: { enabled: true },
+      highSaturation: { enabled: true },
+      lowSaturation: { enabled: true },
+      monochrome: { enabled: true },
+    },
+    content: {
+      adjustFontSizing: { enabled: true },
+      highlightTitle: { enabled: true },
+      highlightLinks: { enabled: true },
+      dyslexicFont: { enabled: true },
+      letterSpacing: { enabled: true },
+      lineHeight: { enabled: true },
+      fontWeight: { enabled: true },
+      textAlign: { enabled: true },
+    },
+    navigation: {
+      readingGuide: { enabled: true },
+      pauseAnimations: { enabled: true },
+      bigCursor: { enabled: true },
+    },
+    statement: {
+      enabled: Boolean(statementUrl),
+      url: statementUrl,
+      displayInWidget: false,
+      generatedDate: "",
+      formData: {
+        companyName: companyName,
+        businessEmail: "",
+        website: website,
+        wcagStandard: "WCAG 2.2 Level AA",
+        conformanceStatus: "fully-conformant",
+      },
+    },
+    profiles: { enabled: true },
+    pageRead: { enabled: true },
+    muteSounds: { enabled: true },
+  },
+};
+---
+
+{enabled && (
+  <script is:inline define:vars={{ config, fontsUrl, scriptSrc }}>
+    (function() {
+      if (window.__coddle_access_initialized) return;
+      window.__coddle_access_initialized = true;
+
+      window._cyA11yConfig = config;
+      window._cyA11yAssets = {
+        fonts: fontsUrl
+      };
+
+      if (!document.getElementById("coddle-access-script")) {
+        const script = document.createElement("script");
+        script.id = "coddle-access-script";
+        script.type = "text/javascript";
+        script.src = scriptSrc;
+        script.async = true;
+        document.body ? document.body.appendChild(script) : document.head.appendChild(script);
+      }
+    })();
+  </script>
+)}

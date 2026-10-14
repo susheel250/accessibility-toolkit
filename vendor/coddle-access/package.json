@@ -1,0 +1,35 @@
+{
+  "name": "@coddletech/access-widget",
+  "version": "1.2.0",
+  "description": "Coddle Access - Lightweight, fully customizable web accessibility toolkit by Coddle Technologies",
+  "main": "js/widget.min.js",
+  "module": "js/widget.js",
+  "files": [
+    "js",
+    "fonts",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "keywords": [
+    "accessibility",
+    "a11y",
+    "wcag",
+    "coddle",
+    "ada",
+    "compliance",
+    "screen-reader",
+    "contrast",
+    "dyslexia"
+  ],
+  "author": "Coddle Technologies <info@coddletech.com> (https://coddletech.com)",
+  "license": "MIT",
+  "homepage": "https://coddletech.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/coddletech/coddle-access.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

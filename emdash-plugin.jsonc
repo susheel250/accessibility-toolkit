@@ -1,0 +1,124 @@
+{
+	"$schema": "https://raw.githubusercontent.com/emdash-cms/emdash/main/packages/plugin-cli/schemas/emdash-plugin.schema.json",
+
+	"slug": "coddle-access",
+	"publisher": "did:plc:pcngdskjcwsettdojdho2dtr",
+	"version": "1.2.0",
+	"license": "MIT",
+
+	"name": "Coddle Accessibility Toolkit",
+	"description": "Web accessibility toolkit with profiles, contrast, typography, screen reader, and WCAG tools.",
+	"keywords": ["accessibility", "a11y", "wcag", "coddle", "compliance"],
+
+	"author": {
+		"name": "Coddle Technologies",
+		"url": "https://coddletech.com",
+		"email": "info@coddletech.com"
+	},
+	"security": {
+		"email": "security@coddletech.com",
+		"url": "https://coddletech.com/security"
+	},
+	"repo": "https://github.com/coddletech/coddle-access",
+
+	"capabilities": [],
+	"allowedHosts": [],
+	"storage": {},
+
+	"admin": {
+		"settingsSchema": {
+			"enabled": {
+				"type": "boolean",
+				"label": "Enable Accessibility Widget",
+				"description": "Toggle the public Coddle Access widget on or off.",
+				"default": true
+			},
+			"primaryColor": {
+				"type": "string",
+				"label": "Brand Color",
+				"description": "Primary accent hex color for the widget button and active highlights (e.g. #1863DC).",
+				"default": "#1863DC"
+			},
+			"iconId": {
+				"type": "select",
+				"label": "Launcher Icon",
+				"description": "Visual icon displayed inside the floating launcher button.",
+				"options": [
+					{ "value": "person", "label": "Accessibility Person" },
+					{ "value": "wheelchair", "label": "Wheelchair / Mobility" },
+					{ "value": "universal-access", "label": "Universal Access Symbol" }
+				],
+				"default": "person"
+			},
+			"iconSize": {
+				"type": "number",
+				"label": "Button Size (px)",
+				"description": "Diameter of the floating launcher button (24 to 80 px).",
+				"default": 48,
+				"min": 24,
+				"max": 80
+			},
+			"positionDesktop": {
+				"type": "select",
+				"label": "Desktop Screen Position",
+				"description": "Placement of the floating button on desktop screens.",
+				"options": [
+					{ "value": "bottom-right", "label": "Bottom Right" },
+					{ "value": "bottom-left", "label": "Bottom Left" },
+					{ "value": "top-right", "label": "Top Right" },
+					{ "value": "top-left", "label": "Top Left" }
+				],
+				"default": "bottom-right"
+			},
+			"positionMobile": {
+				"type": "select",
+				"label": "Mobile Screen Position",
+				"description": "Placement of the floating button on mobile devices.",
+				"options": [
+					{ "value": "bottom-right", "label": "Bottom Right" },
+					{ "value": "bottom-left", "label": "Bottom Left" },
+					{ "value": "top-right", "label": "Top Right" },
+					{ "value": "top-left", "label": "Top Left" }
+				],
+				"default": "bottom-right"
+			},
+			"language": {
+				"type": "string",
+				"label": "Default Language",
+				"description": "Two-letter language code for initial widget display (e.g. en, es, fr, de, he).",
+				"default": "en"
+			},
+			"statementUrl": {
+				"type": "url",
+				"label": "Accessibility Statement URL",
+				"description": "Full URL or relative path to your website accessibility statement.",
+				"default": "/accessibility-statement"
+			}
+		}
+	},
+
+	"release": {
+		"requires": {
+			"env:emdash": ">=0.12.0"
+		},
+		"artifacts": {
+			"icon": {
+				"file": "icon.png"
+			},
+			"screenshots": [
+				{
+					"file": "screenshots/coddle-access-menu.jpg"
+				}
+			]
+		}
+	},
+
+	"sections": {
+		"description": {
+			"file": "docs/description.md"
+		},
+		"changelog": {
+			"file": "CHANGELOG.md"
+		}
+	}
+}

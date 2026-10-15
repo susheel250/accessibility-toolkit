@@ -533,7 +533,7 @@ const plugin: SandboxedPlugin = {
 
 				return {
 					...settings,
-					version: "1.3.1",
+					version: "1.3.2",
 					toolkit: "Accessibility Toolkit",
 					publisher: "EmDash Community",
 				};
@@ -585,7 +585,7 @@ const plugin: SandboxedPlugin = {
 				return {
 					status: "active",
 					pluginId: ctx.plugin.id,
-					version: "1.3.1",
+					version: "1.3.2",
 					brand: "Accessibility Toolkit",
 					vendor: "EmDash Community",
 					website: "https://emdashcms.com",

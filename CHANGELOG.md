@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.3.2] - 2026-10-15
+
+### Fixed
+- Enforced standard-format plugin architecture by removing `adminEntry` from descriptor, resolving EmDash core builder incompatibility.
+- Ensured 100% compliance with EmDash Block Kit admin route specifications (`POST /admin`).
+
+### Added
+- Added `pluginId` and `cdnSrc` props in companion Astro components (`AccessibilityWidget.astro`, `CoddleAccessWidget.astro`) for automatic registry ID resolution (`r_*`) and CDN fallback support.
+- Added comprehensive automated test coverage for registry installation ID scoping and asset fallback handling.
+
+### Improved
+- Robust script error handling with non-blocking fallback warnings when host themes do not provide local vendor assets in `public/`.
+- Verified live integration on isolated EmDash server instance.
+
 ## [1.3.1] - 2026-10-15
 
 ### Changed
@@ -18,35 +32,22 @@
 ## [1.3.0] - 2026-10-14
 
 ### Added
-- Block Kit admin interface at `/settings` with preview link.
-- Controls for status, 12 languages, hex color, icons, sizes, positions.
-- Route handler (`POST /admin`) for page load and submissions.
+- Block Kit admin interface at `/settings` with preview link and 8 configurable settings.
+- Route handler (`POST /admin`) for page load and form submissions.
 - Declared `admin.settingsSchema` in plugin manifest.
 
 ### Improved
 - Streamlined Workerd sandbox bundle.
 - Backward compatibility for legacy icon and position values.
-- Duplicate-initialization protection in Astro components.
-
-## [1.2.1] - 2026-10-14
-
-### Changed
-- Updated marketplace listing screenshot to neutral showcase.
 
 ## [1.2.0] - 2026-10-13
 
 ### Added
-- Modern cards, rounded controls, and clean interface styling.
-- Font-size controls with percentage and text-alignment.
-- Multi-language selector dropdown.
-
-### Improved
-- Responsive layouts for desktop, tablet, and mobile.
-- Refined focus indicators and interactive states.
+- Modern cards, rounded controls, font sizing, and multi-language support.
 
 ## [1.1.0] - 2026-10-12
 
 ### Added
-- Initial standalone accessibility toolkit package for EmDash CMS.
-- Bundled OpenDyslexic font assets locally with CDN fallback.
+- Initial standalone accessibility toolkit package with local and CDN font support.
+
 

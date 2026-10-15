@@ -1,7 +1,7 @@
-// Official Coddle Access Admin Interface for EmDash CMS
+// Accessibility Toolkit Admin Interface for EmDash CMS
 import React, { useState, useEffect, useRef } from "react";
 
-export interface CoddleAccessSettings {
+export interface AccessibilityToolkitSettings {
   enabled: boolean;
   language: string;
   primaryColor: string;
@@ -12,9 +12,10 @@ export interface CoddleAccessSettings {
   statementUrl: string;
 }
 
-export type AccessiYesSettings = CoddleAccessSettings;
+export type CoddleAccessSettings = AccessibilityToolkitSettings;
+export type AccessiYesSettings = AccessibilityToolkitSettings;
 
-export const DEFAULT_SETTINGS: CoddleAccessSettings = {
+export const DEFAULT_SETTINGS: AccessibilityToolkitSettings = {
   enabled: true,
   language: 'en',
   primaryColor: '#1863DC',
@@ -26,15 +27,12 @@ export const DEFAULT_SETTINGS: CoddleAccessSettings = {
 };
 
 export function getPluginCandidateIds(): string[] {
-  const ids: string[] = ["coddle-access"];
+  const ids: string[] = ["accessibility-toolkit", "coddle-access", "accessibility"];
   if (typeof window !== "undefined" && window.location?.pathname) {
     const match = window.location.pathname.match(/(?:plugins|plugins-manager)\/([^/?#]+)/);
     if (match && match[1] && !["marketplace", "registry"].includes(match[1])) {
       ids.unshift(match[1]);
     }
-  }
-  if (!ids.includes("accessibility")) {
-    ids.push("accessibility");
   }
   return Array.from(new Set(ids));
 }
@@ -55,7 +53,7 @@ export const SUPPORTED_LANGUAGES = [
 ];
 
 export const PRESET_COLORS = [
-  { hex: '#1863DC', label: 'Coddle Blue (Default)' },
+  { hex: '#1863DC', label: 'Ocean Blue (Default)' },
   { hex: '#0369A1', label: 'Deep Ocean Blue' },
   { hex: '#0D9488', label: 'Teal' },
   { hex: '#4F46E5', label: 'Indigo' },
@@ -218,7 +216,7 @@ export function CoddleAccessAdminPage() {
         if (typeof data.statementUrl === 'string') setStatementUrl(data.statementUrl);
       }
     } catch (err: any) {
-      setError(err?.message || "Failed to load Coddle Access settings.");
+      setError(err?.message || "Failed to load Accessibility settings.");
     } finally {
       setLoading(false);
     }
@@ -339,7 +337,7 @@ export function CoddleAccessAdminPage() {
   }
 
   const icons: Array<{ id: 'default' | 'accessibility' | 'assist' | 'wheel'; label: string; name: string }> = [
-    { id: 'default', label: 'Default icon', name: 'Coddle Access Figure' },
+    { id: 'default', label: 'Default icon', name: 'Accessibility Figure' },
     { id: 'accessibility', label: 'Accessibility icon', name: 'Universal Access' },
     { id: 'assist', label: 'Assist icon', name: 'Assist / Help' },
     { id: 'wheel', label: 'Wheelchair icon', name: 'Wheelchair' },
@@ -446,7 +444,7 @@ export function CoddleAccessAdminPage() {
       <div className="accessiyes-header-section coddle-header-section" style={{ marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
         <div>
           <div className="accessiyes-breadcrumb" style={{ fontSize: "0.85rem", color: "var(--ay-breadcrumb, #64748b)", marginBottom: "0.45rem", display: "flex", gap: "0.4rem" }}>
-            <span>Admin</span> / <span>Plugins</span> / <span className="accessiyes-breadcrumb-active" style={{ fontWeight: 600, color: "var(--ay-breadcrumb-active, #0f172a)" }}>Coddle Accessibility</span>
+            <span>Admin</span> / <span>Plugins</span> / <span className="accessiyes-breadcrumb-active" style={{ fontWeight: 600, color: "var(--ay-breadcrumb-active, #0f172a)" }}>Accessibility Toolkit</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.35rem" }}>
             <div
@@ -472,11 +470,11 @@ export function CoddleAccessAdminPage() {
               </svg>
             </div>
             <h1 className="accessiyes-page-title" style={{ fontSize: "1.9rem", fontWeight: 800, color: "var(--ay-heading, #0f172a)", margin: 0, letterSpacing: "-0.02em" }}>
-              Coddle Accessibility Toolkit
+              Accessibility Toolkit
             </h1>
           </div>
           <p className="accessiyes-page-description" style={{ color: "var(--ay-description, #64748b)", fontSize: "0.95rem", margin: "0.2rem 0 0 0", maxWidth: "800px" }}>
-            Customize the language, colour, icon, dimensions, and positioning of the official Coddle Accessibility Toolkit.
+            Customize the language, colour, icon, dimensions, and positioning of the official Accessibility Toolkit.
           </p>
         </div>
 
@@ -507,7 +505,7 @@ export function CoddleAccessAdminPage() {
         </div>
       </div>
 
-      {/* Coddle Brand Identity Panel */}
+      {/* Brand Identity Panel */}
       <div
         style={{
           background: "linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%)",
@@ -547,26 +545,22 @@ export function CoddleAccessAdminPage() {
           </div>
           <div>
             <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#1e3a8a", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <span>Coddle Access Suite</span>
+              <span>Accessibility Suite</span>
               <span style={{ fontSize: "0.7rem", color: "#16a34a", fontWeight: 700, background: "#dcfce7", padding: "0.1rem 0.45rem", borderRadius: "4px" }}>
                 WCAG 2.2 Level AA
               </span>
             </div>
             <div style={{ fontSize: "0.82rem", color: "#475569" }}>
-              Municipal Accessibility Suite • Powered by Coddle Technologies
+              Web & Municipal Accessibility Suite • Standard Edition
             </div>
           </div>
         </div>
 
-        <a
-          href="https://coddletech.com"
-          target="_blank"
-          rel="noopener noreferrer"
+        <div
           style={{
             fontSize: "0.82rem",
             fontWeight: 600,
             color: "#1863DC",
-            textDecoration: "none",
             display: "inline-flex",
             alignItems: "center",
             gap: "0.3rem",
@@ -576,17 +570,16 @@ export function CoddleAccessAdminPage() {
             border: "1px solid #bfdbfe",
           }}
         >
-          <span>coddletech.com</span>
-          <span aria-hidden="true">↗</span>
-        </a>
+          <span>WCAG 2.2 AA / ADA 508</span>
+        </div>
       </div>
 
       {loading ? (
         <div style={{ padding: "4rem", textAlign: "center", color: "#64748b", background: "#ffffff", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
-          Loading Coddle Accessibility settings...
+          Loading Accessibility settings...
         </div>
       ) : (
-        <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "1.75rem" }}>
+        <form onSubmit={handleSave} noValidate style={{ display: "flex", flexDirection: "column", gap: "1.75rem" }}>
           {/* 1. Master Enable/Disable Card */}
             <div
               style={{
@@ -602,10 +595,10 @@ export function CoddleAccessAdminPage() {
             >
               <div>
                 <h3 style={{ fontSize: "1.15rem", fontWeight: 700, margin: "0 0 0.35rem 0", color: "#0f172a" }}>
-                  Enable Coddle Accessibility Widget
+                  Enable Accessibility Widget
                 </h3>
                 <p style={{ margin: 0, fontSize: "0.9rem", color: "#64748b" }}>
-                  When enabled, the Coddle Accessibility widget and its standalone tools are rendered on all live public pages.
+                  When enabled, the accessibility widget and its standalone tools are rendered on all live public pages.
                 </p>
               </div>
 
@@ -614,7 +607,7 @@ export function CoddleAccessAdminPage() {
                 id="accessiyes-enabled-toggle"
                 role="switch"
                 aria-checked={enabled}
-                aria-label="Enable Coddle Accessibility Widget"
+                aria-label="Enable Accessibility Widget"
                 onClick={() => setEnabled(!enabled)}
                 style={{
                   display: "inline-flex",
@@ -657,7 +650,7 @@ export function CoddleAccessAdminPage() {
                 Widget Language
               </label>
               <p style={{ fontSize: "0.9rem", color: "#64748b", margin: "0 0 1rem 0" }}>
-                Default interface language for the Coddle Accessibility menu.
+                Default interface language for the accessibility menu.
               </p>
 
               <select
@@ -1181,7 +1174,7 @@ export function CoddleAccessAdminPage() {
               </p>
 
               <input
-                type="url"
+                type="text"
                 id="accessiyes-statement-url"
                 placeholder="/accessibility-statement or https://example.com/accessibility-statement"
                 value={statementUrl}
@@ -1275,11 +1268,12 @@ export function CoddleAccessAdminPage() {
 }
 
 // EmDash Plugin Admin Registry Exports
+export const AccessibilityToolkitAdminPage = CoddleAccessAdminPage;
 export const AccessiYesAdminPage = CoddleAccessAdminPage;
 
 export const pages: Record<string, React.ComponentType> = {
-  "/settings": CoddleAccessAdminPage,
-  "/": CoddleAccessAdminPage,
+  "/settings": AccessibilityToolkitAdminPage,
+  "/": AccessibilityToolkitAdminPage,
 };
 
 export default {

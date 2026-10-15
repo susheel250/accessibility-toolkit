@@ -1,25 +1,25 @@
 {
 	"$schema": "https://raw.githubusercontent.com/emdash-cms/emdash/main/packages/plugin-cli/schemas/emdash-plugin.schema.json",
 
-	"slug": "coddle-access",
+	"slug": "accessibility-toolkit",
 	"publisher": "did:plc:pcngdskjcwsettdojdho2dtr",
 	"version": "1.3.1",
 	"license": "MIT",
 
-	"name": "Coddle Accessibility Toolkit",
+	"name": "Accessibility Toolkit",
 	"description": "Comprehensive web accessibility toolkit for EmDash CMS websites - WCAG 2.2 AA and ADA Section 508 compliance.",
-	"keywords": ["accessibility", "a11y", "wcag", "coddle", "compliance"],
+	"keywords": ["accessibility", "a11y", "wcag", "compliance", "toolkit"],
 
 	"author": {
-		"name": "Coddle Technologies",
-		"url": "https://coddletech.com",
-		"email": "info@coddletech.com"
+		"name": "Accessibility Toolkit Contributors",
+		"url": "https://github.com/emdash-community/accessibility-toolkit",
+		"email": "a11y@emdashcms.com"
 	},
 	"security": {
-		"email": "security@coddletech.com",
-		"url": "https://coddletech.com/security"
+		"email": "security@emdashcms.com",
+		"url": "https://github.com/emdash-community/accessibility-toolkit/security"
 	},
-	"repo": "https://github.com/coddletech/coddle-access",
+	"repo": "https://github.com/emdash-community/accessibility-toolkit",
 
 	"capabilities": [],
 	"allowedHosts": [],
@@ -29,7 +29,7 @@
 		"pages": [
 			{
 				"path": "/settings",
-				"label": "Coddle Accessibility",
+				"label": "Accessibility Toolkit",
 				"icon": "accessibility"
 			}
 		],
@@ -37,13 +37,13 @@
 			"enabled": {
 				"type": "boolean",
 				"label": "Enable Accessibility Widget",
-				"description": "Toggle the public Coddle Access widget on or off.",
+				"description": "Toggle the public accessibility widget on or off.",
 				"default": true
 			},
 			"language": {
 				"type": "select",
 				"label": "Widget Language",
-				"description": "Default interface language for the Coddle Accessibility menu.",
+				"description": "Default interface language for the accessibility menu.",
 				"options": [
 					{ "value": "en", "label": "English" },
 					{ "value": "es", "label": "Spanish (Español)" },
@@ -71,7 +71,7 @@
 				"label": "Launcher Icon",
 				"description": "Visual icon displayed inside the floating launcher button.",
 				"options": [
-					{ "value": "default", "label": "Default (Coddle Access Figure)" },
+					{ "value": "default", "label": "Default (Accessibility Figure)" },
 					{ "value": "accessibility", "label": "Universal Access" },
 					{ "value": "assist", "label": "Assist / Help" },
 					{ "value": "wheel", "label": "Wheelchair" }
@@ -129,7 +129,7 @@
 			},
 			"screenshots": [
 				{
-					"file": "screenshots/coddle-access-menu.jpg"
+					"file": "screenshots/accessibility-menu.jpg"
 				}
 			]
 		}

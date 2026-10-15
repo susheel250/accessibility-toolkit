@@ -1,0 +1,22 @@
+---
+// components/AccessibilityWidget.astro
+// Standalone Accessibility Toolkit Astro Companion Component
+import CoddleAccessWidget from "./CoddleAccessWidget.astro";
+
+interface Props {
+  enabled?: boolean;
+  language?: string;
+  primaryColor?: string;
+  iconId?: "default" | "accessibility" | "assist" | "wheel";
+  iconSize?: number;
+  positionDesktop?: "bottom-right" | "bottom-left" | "top-right" | "top-left";
+  positionMobile?: "bottom-right" | "bottom-left" | "top-right" | "top-left";
+  statementUrl?: string;
+  scriptSrc?: string;
+  fontsUrl?: string;
+  companyName?: string;
+  website?: string;
+}
+---
+
+<CoddleAccessWidget {...Astro.props} />

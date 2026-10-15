@@ -15,7 +15,7 @@ import plugin, {
 	renderAdminBlocks,
 } from "../src/plugin.ts";
 
-describe("Coddle Accessibility Toolkit - Comprehensive Test Suite", () => {
+describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 	function createMockSettings(initial = {}) {
 		const store = new Map(Object.entries(initial));
 		return {
@@ -51,13 +51,13 @@ describe("Coddle Accessibility Toolkit - Comprehensive Test Suite", () => {
 		const jsonClean = manifestRaw.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
 		const manifest = JSON.parse(jsonClean);
 
-		assert.equal(manifest.slug, "coddle-access");
+		assert.equal(manifest.slug, "accessibility-toolkit");
 		assert.equal(manifest.version, "1.3.1");
 		assert.equal(manifest.license, "MIT");
-		assert.equal(manifest.name, "Coddle Accessibility Toolkit");
+		assert.equal(manifest.name, "Accessibility Toolkit");
 		assert.ok(manifest.publisher.startsWith("did:plc:"));
-		assert.equal(manifest.author.name, "Coddle Technologies");
-		assert.equal(manifest.security.email, "security@coddletech.com");
+		assert.equal(manifest.author.name, "Accessibility Toolkit Contributors");
+		assert.equal(manifest.security.email, "security@emdashcms.com");
 		assert.deepEqual(manifest.capabilities, []);
 		assert.deepEqual(manifest.allowedHosts, []);
 
@@ -65,7 +65,7 @@ describe("Coddle Accessibility Toolkit - Comprehensive Test Suite", () => {
 		assert.ok(Array.isArray(manifest.admin.pages));
 		assert.equal(manifest.admin.pages.length, 1);
 		assert.equal(manifest.admin.pages[0].path, "/settings");
-		assert.equal(manifest.admin.pages[0].label, "Coddle Accessibility");
+		assert.equal(manifest.admin.pages[0].label, "Accessibility Toolkit");
 		assert.equal(manifest.admin.pages[0].icon, "accessibility");
 
 		// Verify 8 settings in admin.settingsSchema
@@ -133,13 +133,13 @@ describe("Coddle Accessibility Toolkit - Comprehensive Test Suite", () => {
 		// Header & Context description
 		const header = result.blocks.find((b) => b.type === "header");
 		assert.ok(header);
-		assert.equal(header.text, "Coddle Accessibility Toolkit");
+		assert.equal(header.text, "Accessibility Toolkit");
 
 		const context = result.blocks.find((b) => b.type === "context");
 		assert.ok(context);
 		assert.equal(
 			context.text,
-			"Customize the language, colour, icon, dimensions, and positioning of the official Coddle Accessibility Toolkit.",
+			"Customize the language, colour, icon, dimensions, and positioning of the official Accessibility Toolkit.",
 		);
 
 		// Action button
@@ -150,7 +150,7 @@ describe("Coddle Accessibility Toolkit - Comprehensive Test Suite", () => {
 		// Banner
 		const banner = result.blocks.find((b) => b.type === "banner");
 		assert.ok(banner);
-		assert.ok(banner.title.includes("Coddle Access Suite"));
+		assert.ok(banner.title.includes("Accessibility Suite"));
 
 		// Form with controls
 		const form = result.blocks.find((b) => b.type === "form");
@@ -251,7 +251,7 @@ describe("Coddle Accessibility Toolkit - Comprehensive Test Suite", () => {
 		assert.equal(result.positionMobile, "bottom-right");
 		assert.equal(result.language, "en");
 		assert.equal(result.version, "1.3.1");
-		assert.equal(result.toolkit, "Coddle Accessibility Toolkit");
+		assert.equal(result.toolkit, "Accessibility Toolkit");
 	});
 
 	test("snippet route returns HTML embed tags reflecting saved settings", async () => {
@@ -277,8 +277,8 @@ describe("Coddle Accessibility Toolkit - Comprehensive Test Suite", () => {
 		const result = await plugin.routes.status.handler({}, createMockCtx());
 		assert.equal(result.status, "active");
 		assert.equal(result.version, "1.3.1");
-		assert.equal(result.brand, "Coddle Access");
-		assert.equal(result.vendor, "Coddle Technologies");
+		assert.equal(result.brand, "Accessibility Toolkit");
+		assert.equal(result.vendor, "EmDash Community");
 	});
 
 	test("settings persistence: fresh install defaults, update retention, partial updates, and enable/disable toggle", async () => {
@@ -399,7 +399,7 @@ describe("Coddle Accessibility Toolkit - Comprehensive Test Suite", () => {
 			? path.resolve(import.meta.dirname, "..")
 			: path.resolve(".");
 		const iconPath = path.resolve(rootDir, "icon.png");
-		const screenshotPath = path.resolve(rootDir, "screenshots/coddle-access-menu.jpg");
+		const screenshotPath = path.resolve(rootDir, "screenshots/accessibility-menu.jpg");
 		const widgetJsPath = path.resolve(rootDir, "vendor/coddle-access/js/widget.min.js");
 		const fontWoffPath = path.resolve(rootDir, "vendor/coddle-access/fonts/OpenDyslexic3-Regular.woff");
 		const fontTtfPath = path.resolve(rootDir, "vendor/coddle-access/fonts/OpenDyslexic3-Regular.ttf");
@@ -428,13 +428,13 @@ describe("Coddle Accessibility Toolkit - Comprehensive Test Suite", () => {
 		const adminContent = fs.readFileSync(adminPath, "utf-8");
 
 		// Branding & Heading
-		assert.ok(adminContent.includes("Coddle Accessibility Toolkit"), "Title present in admin UI");
-		assert.ok(adminContent.includes("Coddle Access Suite"), "Brand panel present in admin UI");
+		assert.ok(adminContent.includes("Accessibility Toolkit"), "Title present in admin UI");
+		assert.ok(adminContent.includes("Accessibility Suite"), "Brand panel present in admin UI");
 		assert.ok(adminContent.includes("WCAG 2.2 Level AA"), "WCAG AA badge present in admin UI");
 		assert.ok(adminContent.includes("Preview Frontend ↗"), "Preview Frontend button present in admin UI");
 
 		// Core controls
-		assert.ok(adminContent.includes("Enable Coddle Accessibility Widget"), "Master toggle present");
+		assert.ok(adminContent.includes("Enable Accessibility Widget"), "Master toggle present");
 		assert.ok(adminContent.includes("Widget Language"), "Language selector present");
 		assert.ok(adminContent.includes("Widget Colour"), "Color picker present");
 		assert.ok(adminContent.includes("Live Swatch"), "Live swatch present");
@@ -448,7 +448,8 @@ describe("Coddle Accessibility Toolkit - Comprehensive Test Suite", () => {
 		// Namespace & Endpoint decoupling
 		assert.ok(adminContent.includes("/_emdash/api/admin/plugins/"), "Uses EmDash admin plugin settings API");
 		assert.ok(adminContent.includes("/_emdash/api/plugins/"), "Uses EmDash plugin config API");
-		assert.ok(adminContent.includes("coddle-access"), "Defaults to coddle-access namespace");
+		assert.ok(adminContent.includes("accessibility-toolkit"), "Supports accessibility-toolkit namespace");
+		assert.ok(adminContent.includes("coddle-access"), "Defaults/fallbacks to coddle-access namespace");
 
 		// All 12 languages supported
 		for (const lang of SUPPORTED_LANGUAGES) {

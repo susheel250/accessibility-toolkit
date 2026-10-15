@@ -1,6 +1,6 @@
-# Coddle Accessibility Toolkit for EmDash CMS
+# Accessibility Toolkit for EmDash CMS
 
-> A modern, lightweight, fully customizable web accessibility toolkit by **Coddle Technologies** designed to assist users with disabilities and enhance compliance with WCAG 2.2 Level AA and ADA standards across EmDash websites.
+> A modern, lightweight, fully customizable web accessibility toolkit designed to assist users with disabilities and enhance compliance with WCAG 2.2 Level AA and ADA standards across EmDash websites.
 
 [![EmDash Plugin](https://img.shields.io/badge/EmDash-Plugin-blue.svg)](https://emdashcms.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -10,7 +10,7 @@
 
 ## Overview
 
-The **Coddle Accessibility Toolkit** brings comprehensive digital accessibility capabilities to any EmDash CMS site. Built with a privacy-first, zero-privilege sandboxed architecture, it integrates seamlessly into the official EmDash Plugin Registry while guaranteeing zero interference with host layouts, forms, and administrative operations.
+The **Accessibility Toolkit** brings comprehensive digital accessibility capabilities to any EmDash CMS site. Built with a privacy-first, zero-privilege sandboxed architecture, it integrates seamlessly into the official EmDash Plugin Registry while guaranteeing zero interference with host layouts, forms, and administrative operations.
 
 ---
 
@@ -30,13 +30,13 @@ The **Coddle Accessibility Toolkit** brings comprehensive digital accessibility 
 
 EmDash uses an isolated `workerd` sandbox runtime for registry-published plugins. This package conforms strictly to the EmDash Plugin Registry trust contract:
 
-| Capability / Concern | Sandboxed Registry Plugin (`packages/coddle-access`) | Native Integration (`src/plugins/accessibility`) |
+| Capability / Concern | Sandboxed Registry Plugin (`packages/accessibility-toolkit`) | Native Integration (`src/plugins/accessibility`) |
 | :--- | :--- | :--- |
 | **Execution Environment** | Cloudflare `workerd` sandbox | Node.js host process |
 | **Trust Contract** | `capabilities: []`, `allowedHosts: []` (zero-privilege) | Full host process access (`format: "native"`) |
 | **Settings UI** | Custom Block Kit admin at `/settings` + `admin.settingsSchema` | Custom interactive React canvas with live preview |
-| **Configuration API** | Public route `GET /api/plugins/coddle-access/config` | Direct SQLite queries on `options` table |
-| **DOM Delivery** | Theme embed snippet (`GET /api/plugins/coddle-access/snippet`) | Direct Astro `<CoddleAccessWidget />` layout injection |
+| **Configuration API** | Public route `GET /api/plugins/accessibility-toolkit/config` | Direct SQLite queries on `options` table |
+| **DOM Delivery** | Theme embed snippet (`GET /api/plugins/accessibility-toolkit/snippet`) | Direct Astro `<AccessibilityWidget />` layout injection |
 
 ### Why a Native Companion Exists
 
@@ -44,8 +44,8 @@ In EmDash, the `page:fragments` hook (which injects raw HTML fragments into visi
 
 Therefore, sandboxed registry plugins provide:
 1. **Administrative Configuration**: Managed directly in EmDash Settings through `admin.pages` (/settings) and `admin.settingsSchema`.
-2. **Configuration API**: Accessible by client scripts via `/api/plugins/coddle-access/config`.
-3. **Embed Options**: Either add the generated embed snippet to your theme layout, or use the optional native companion `<CoddleAccessWidget />` in Astro themes.
+2. **Configuration API**: Accessible by client scripts via `/_emdash/api/plugins/$id/config`.
+3. **Embed Options**: Either add the generated embed snippet to your theme layout, or use the optional native companion `<AccessibilityWidget />` (or `<CoddleAccessWidget />`) in Astro themes.
 
 ---
 
@@ -55,7 +55,7 @@ The following settings are configurable from the EmDash Admin Settings page:
 
 | Setting Key | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `enabled` | `boolean` | `true` | Toggle the public Coddle Access widget on or off. |
+| `enabled` | `boolean` | `true` | Toggle the public accessibility widget on or off. |
 | `primaryColor` | `string` | `"#1863DC"` | Hex brand accent color for launcher and active highlights. |
 | `iconId` | `select` | `"default"` | Launcher icon style (`default`, `accessibility`, `assist`, `wheel`). |
 | `iconSize` | `number` | `48` | Diameter of the floating launcher button in pixels (40, 48, 56). |
@@ -70,9 +70,9 @@ The following settings are configurable from the EmDash Admin Settings page:
 
 The sandboxed plugin exposes three unauthenticated endpoints:
 
-- `GET /api/plugins/coddle-access/config`: Returns active JSON settings for dynamic client-side widget consumption.
-- `GET /api/plugins/coddle-access/snippet`: Returns ready-to-use HTML `<script>` tags for your theme templates.
-- `GET /api/plugins/coddle-access/status`: Returns plugin health and version telemetry.
+- `GET /_emdash/api/plugins/accessibility-toolkit/config`: Returns active JSON settings for dynamic client-side widget consumption.
+- `GET /_emdash/api/plugins/accessibility-toolkit/snippet`: Returns ready-to-use HTML `<script>` tags for your theme templates.
+- `GET /_emdash/api/plugins/accessibility-toolkit/status`: Returns plugin health and version telemetry.
 
 ---
 
@@ -91,7 +91,7 @@ Or use dynamic configuration loaded from the plugin API:
 
 ```html
 <script>
-  fetch('/api/plugins/coddle-access/config')
+  fetch('/_emdash/api/plugins/accessibility-toolkit/config')
     .then(r => r.json())
     .then(cfg => {
       if (!cfg.enabled) return;
@@ -114,35 +114,19 @@ Or use dynamic configuration loaded from the plugin API:
 </script>
 ```
 
-#### Method B: Public CDN Embed (jsDelivr / npm)
-When using the public CDN release of `@coddletech/access-widget`, include the script with an automatic local fallback:
-
-```html
-<script>
-  window._cyA11yAssets = {
-    fonts: 'https://cdn.jsdelivr.net/npm/@coddletech/access-widget@1.2.0/fonts/'
-  };
-</script>
-<script 
-  src="https://cdn.jsdelivr.net/npm/@coddletech/access-widget@1.2.0/js/widget.min.js" 
-  onerror="this.onerror=null;this.src='/vendor/coddle-access/js/widget.min.js';" 
-  async>
-</script>
-```
-
 ### Option 2: Native Companion (Astro Themes)
 
 In Astro-based EmDash installations, import the companion component into your base layout:
 
 ```astro
 ---
-import CoddleAccessWidget from "@/plugins/accessibility/widget/CoddleAccessWidget.astro";
+import AccessibilityWidget from "@/plugins/accessibility/widget/AccessibilityWidget.astro";
 ---
 <html>
   <head>...</head>
   <body>
     <slot />
-    <CoddleAccessWidget />
+    <AccessibilityWidget />
   </body>
 </html>
 ```
@@ -177,7 +161,8 @@ npx @emdash-cms/plugin-cli publish
 
 ## Support & Security Contact
 
-- **Author**: Coddle Technologies ([https://coddletech.com](https://coddletech.com))
-- **Email**: `info@coddletech.com`
-- **Security Contact**: `security@coddletech.com`
-- **License**: MIT License &copy; 2026 Coddle Technologies
+- **Author**: Accessibility Toolkit Contributors
+- **Email**: `a11y@emdashcms.com`
+- **Security Contact**: `security@emdashcms.com`
+- **License**: MIT License &copy; 2026
+

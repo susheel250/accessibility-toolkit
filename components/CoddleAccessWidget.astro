@@ -1,6 +1,6 @@
 ---
 // components/CoddleAccessWidget.astro
-// Standalone Coddle Accessibility Toolkit Astro Companion Component
+// Standalone Accessibility Toolkit Astro Companion Component
 // Compatible with any Astro or EmDash site
 
 interface Props {
@@ -40,8 +40,8 @@ const config = {
   },
   iconId: iconId,
   iconSize: Number(iconSize),
-  label: "Coddle Accessibility widget",
-  heading: "Coddle Access",
+  label: "Accessibility widget",
+  heading: "Accessibility Toolkit",
   position: {
     mobile: positionMobile,
     desktop: positionDesktop,
@@ -106,7 +106,8 @@ const config = {
 {enabled && (
   <script is:inline define:vars={{ config, fontsUrl, scriptSrc }}>
     (function() {
-      if (window.__coddle_access_initialized || window.__accessiyes_initialized) return;
+      if (window.__accessibility_toolkit_initialized || window.__coddle_access_initialized || window.__accessiyes_initialized) return;
+      window.__accessibility_toolkit_initialized = true;
       window.__coddle_access_initialized = true;
       window.__accessiyes_initialized = true;
 
@@ -115,9 +116,9 @@ const config = {
         fonts: fontsUrl
       };
 
-      if (!document.getElementById("coddle-access-script")) {
+      if (!document.getElementById("accessibility-toolkit-script") && !document.getElementById("coddle-access-script")) {
         var script = document.createElement("script");
-        script.id = "coddle-access-script";
+        script.id = "accessibility-toolkit-script";
         script.type = "text/javascript";
         script.src = scriptSrc;
         script.async = true;

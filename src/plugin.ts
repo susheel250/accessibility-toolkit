@@ -1,6 +1,6 @@
 import type { SandboxedPlugin } from "emdash/plugin";
 
-export interface CoddleAccessSettings {
+export interface AccessibilityToolkitSettings {
 	enabled: boolean;
 	language: string;
 	primaryColor: string;
@@ -11,7 +11,9 @@ export interface CoddleAccessSettings {
 	statementUrl: string;
 }
 
-export const DEFAULT_SETTINGS: CoddleAccessSettings = {
+export type CoddleAccessSettings = AccessibilityToolkitSettings;
+
+export const DEFAULT_SETTINGS: AccessibilityToolkitSettings = {
 	enabled: true,
 	language: "en",
 	primaryColor: "#1863DC",
@@ -38,7 +40,7 @@ export const SUPPORTED_LANGUAGES = [
 ];
 
 export const ICONS = [
-	{ value: "default", label: "Default (Coddle Access Figure)" },
+	{ value: "default", label: "Default (Accessibility Figure)" },
 	{ value: "accessibility", label: "Universal Access" },
 	{ value: "assist", label: "Assist / Help" },
 	{ value: "wheel", label: "Wheelchair" },
@@ -58,7 +60,7 @@ export const POSITIONS = [
 ];
 
 export const PRESET_COLORS = [
-	{ hex: "#1863DC", label: "Coddle Blue (Default)" },
+	{ hex: "#1863DC", label: "Ocean Blue (Default)" },
 	{ hex: "#0369A1", label: "Ishpeming Township Blue" },
 	{ hex: "#0D9488", label: "Teal" },
 	{ hex: "#4F46E5", label: "Indigo" },
@@ -172,18 +174,18 @@ export const elements = {
 };
 
 export function renderAdminBlocks(
-	settings: CoddleAccessSettings,
-	previewUrl: string = "https://coddletech.com",
+	settings: AccessibilityToolkitSettings,
+	previewUrl: string = "http://localhost:4321/",
 ) {
 	const validPreviewUrl =
 		previewUrl.startsWith("http://") || previewUrl.startsWith("https://")
 			? previewUrl
-			: "https://coddletech.com";
+			: "http://localhost:4321/";
 
 	return [
-		blocks.header("Coddle Accessibility Toolkit"),
+		blocks.header("Accessibility Toolkit"),
 		blocks.context(
-			"Customize the language, colour, icon, dimensions, and positioning of the official Coddle Accessibility Toolkit.",
+			"Customize the language, colour, icon, dimensions, and positioning of the official Accessibility Toolkit.",
 		),
 		blocks.actions([
 			elements.link(
@@ -193,16 +195,16 @@ export function renderAdminBlocks(
 			),
 		]),
 		blocks.banner({
-			title: "Coddle Access Suite — WCAG 2.2 Level AA",
+			title: "Accessibility Suite — WCAG 2.2 Level AA",
 			description:
-				"Municipal Accessibility Suite • Powered by Coddle Technologies (https://coddletech.com)",
+				"Municipal & Web Accessibility Suite • Standard Edition",
 			variant: "default",
 		}),
 		blocks.form({
 			fields: [
-				elements.toggle("enabled", "Enable Coddle Accessibility Widget", {
+				elements.toggle("enabled", "Enable Accessibility Widget", {
 					description:
-						"When enabled, the Coddle Accessibility widget and its standalone tools are rendered on all live public pages.",
+						"When enabled, the accessibility widget and its standalone tools are rendered on all live public pages.",
 					initialValue: settings.enabled,
 				}),
 				elements.select("language", "Widget Language", SUPPORTED_LANGUAGES, {
@@ -244,13 +246,13 @@ export function renderAdminBlocks(
 			{
 				label: "Compliance & Integration",
 				value:
-					"WCAG 2.2 AA / ADA Section 508 • Coddle Access Suite for EmDash CMS websites",
+					"WCAG 2.2 AA / ADA Section 508 • Accessibility Suite for EmDash CMS websites",
 			},
 		]),
 	];
 }
 
-async function loadSavedSettings(settingsAccess: any): Promise<CoddleAccessSettings> {
+async function loadSavedSettings(settingsAccess: any): Promise<AccessibilityToolkitSettings> {
 	const enabled = (await settingsAccess.get("enabled")) ?? DEFAULT_SETTINGS.enabled;
 	const language = (await settingsAccess.get("language")) ?? DEFAULT_SETTINGS.language;
 	const primaryColor = (await settingsAccess.get("primaryColor")) ?? DEFAULT_SETTINGS.primaryColor;
@@ -280,7 +282,7 @@ async function loadSavedSettings(settingsAccess: any): Promise<CoddleAccessSetti
 }
 
 /**
- * Coddle Accessibility Toolkit - Sandboxed EmDash Plugin Entrypoint
+ * Accessibility Toolkit - Sandboxed EmDash Plugin Entrypoint
  *
  * Runs securely inside EmDash's workerd sandbox.
  * Provides custom Block Kit admin interface at /_emdash/admin/plugins/$id/settings,
@@ -290,19 +292,19 @@ async function loadSavedSettings(settingsAccess: any): Promise<CoddleAccessSetti
 const plugin: SandboxedPlugin = {
 	hooks: {
 		"plugin:install": async (event, ctx) => {
-			ctx.log.info("Coddle Accessibility Toolkit installed", {
+			ctx.log.info("Accessibility Toolkit installed", {
 				pluginId: ctx.plugin.id,
 				event,
 			});
 		},
 		"plugin:activate": async (event, ctx) => {
-			ctx.log.info("Coddle Accessibility Toolkit activated", {
+			ctx.log.info("Accessibility Toolkit activated", {
 				pluginId: ctx.plugin.id,
 				event,
 			});
 		},
 		"plugin:deactivate": async (event, ctx) => {
-			ctx.log.info("Coddle Accessibility Toolkit deactivated", {
+			ctx.log.info("Accessibility Toolkit deactivated", {
 				pluginId: ctx.plugin.id,
 				event,
 			});
@@ -316,7 +318,7 @@ const plugin: SandboxedPlugin = {
 				const input = (routeCtx.input as any) || {};
 				const currentSettings = await loadSavedSettings(ctx.settings);
 
-				let previewUrl = "https://coddletech.com";
+				let previewUrl = "http://localhost:4321/";
 				try {
 					const rawUrl = (routeCtx as any)?.url;
 					if (rawUrl) {
@@ -379,7 +381,7 @@ const plugin: SandboxedPlugin = {
 					}
 
 					// Prepare updated settings
-					const updatedSettings: CoddleAccessSettings = {
+					const updatedSettings: AccessibilityToolkitSettings = {
 						enabled: values.enabled !== undefined ? Boolean(values.enabled) : currentSettings.enabled,
 						language: cleanLang,
 						primaryColor: cleanColor,
@@ -400,7 +402,7 @@ const plugin: SandboxedPlugin = {
 					await ctx.settings.set("positionMobile", updatedSettings.positionMobile);
 					await ctx.settings.set("statementUrl", updatedSettings.statementUrl);
 
-					ctx.log.info("Coddle Accessibility settings updated", {
+					ctx.log.info("Accessibility settings updated", {
 						pluginId: ctx.plugin.id,
 						settings: updatedSettings,
 					});
@@ -429,8 +431,8 @@ const plugin: SandboxedPlugin = {
 				return {
 					...settings,
 					version: "1.3.1",
-					toolkit: "Coddle Accessibility Toolkit",
-					publisher: "Coddle Technologies",
+					toolkit: "Accessibility Toolkit",
+					publisher: "EmDash Community",
 				};
 			},
 		},
@@ -443,7 +445,7 @@ const plugin: SandboxedPlugin = {
 				return {
 					enabled: settings.enabled,
 					html: `<script src="/vendor/coddle-access/js/widget.min.js" data-color="${settings.primaryColor}" data-position="${settings.positionDesktop}" data-lang="${settings.language}" async></script>`,
-					cdnHtml: `<script src="https://cdn.jsdelivr.net/npm/@coddletech/access-widget@1.2.0/js/widget.min.js" onerror="this.onerror=null;this.src='/vendor/coddle-access/js/widget.min.js';" data-color="${settings.primaryColor}" data-position="${settings.positionDesktop}" data-lang="${settings.language}" async></script>`,
+					cdnHtml: `<script src="/vendor/coddle-access/js/widget.min.js" data-color="${settings.primaryColor}" data-position="${settings.positionDesktop}" data-lang="${settings.language}" async></script>`,
 					dynamicLoader: `<script>
 (function() {
   fetch('/_emdash/api/plugins/${ctx.plugin.id}/config')
@@ -469,7 +471,7 @@ const plugin: SandboxedPlugin = {
     });
 })();
 </script>`,
-					companion: "In Astro layouts, you can also render the native companion <CoddleAccessWidget />.",
+					companion: "In Astro layouts, you can also render the native companion <AccessibilityWidget /> or <CoddleAccessWidget />.",
 				};
 			},
 		},
@@ -481,9 +483,9 @@ const plugin: SandboxedPlugin = {
 					status: "active",
 					pluginId: ctx.plugin.id,
 					version: "1.3.1",
-					brand: "Coddle Access",
-					vendor: "Coddle Technologies",
-					website: "https://coddletech.com",
+					brand: "Accessibility Toolkit",
+					vendor: "EmDash Community",
+					website: "https://emdashcms.com",
 				};
 			},
 		},
@@ -491,3 +493,4 @@ const plugin: SandboxedPlugin = {
 };
 
 export default plugin;
+

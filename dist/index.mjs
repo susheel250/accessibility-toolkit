@@ -6,10 +6,10 @@
 
 /** @type {import("emdash").PluginDescriptor} */
 const descriptor = Object.freeze({
-	"id": "coddle-access",
+	"id": "accessibility-toolkit",
 	"version": "1.3.1",
 	"format": "standard",
-	"entrypoint": "coddle-access/sandbox",
+	"entrypoint": "accessibility-toolkit/sandbox",
 	"capabilities": [],
 	"allowedHosts": [],
 	"storage": {},
@@ -51,20 +51,20 @@ const descriptor = Object.freeze({
 	"adminPages": [
 		{
 			"path": "/settings",
-			"label": "Coddle Accessibility",
+			"label": "Accessibility Toolkit",
 			"icon": "accessibility"
 		}
 	],
 	"settingsSchema": {
 		"enabled": {
 			"label": "Enable Accessibility Widget",
-			"description": "Toggle the public Coddle Access widget on or off.",
+			"description": "Toggle the public accessibility widget on or off.",
 			"type": "boolean",
 			"default": true
 		},
 		"language": {
 			"label": "Widget Language",
-			"description": "Default interface language for the Coddle Accessibility menu.",
+			"description": "Default interface language for the accessibility menu.",
 			"type": "select",
 			"options": [
 				{
@@ -131,7 +131,7 @@ const descriptor = Object.freeze({
 			"options": [
 				{
 					"value": "default",
-					"label": "Default (Coddle Access Figure)"
+					"label": "Default (Accessibility Figure)"
 				},
 				{
 					"value": "accessibility",

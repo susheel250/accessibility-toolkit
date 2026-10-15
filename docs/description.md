@@ -1,4 +1,4 @@
-The **Coddle Accessibility Toolkit** is a modern, lightweight web accessibility toolkit by **Coddle Technologies** designed to assist users with disabilities and enhance compliance with WCAG 2.2 Level AA and ADA standards.
+The **Accessibility Toolkit** is a modern, lightweight web accessibility toolkit designed to assist users with disabilities and enhance compliance with WCAG 2.2 Level AA and ADA standards.
 
 ### Key Capabilities
 
@@ -13,3 +13,4 @@ The **Coddle Accessibility Toolkit** is a modern, lightweight web accessibility 
 ### Privacy & Trust Contract
 
 Runs in EmDash's secure workerd sandbox with zero privileged capabilities. No visitor tracking, no external network calls, no data harvesting.
+

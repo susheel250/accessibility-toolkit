@@ -1,7 +1,7 @@
 import { SandboxedPlugin } from "emdash/plugin";
 
 //#region src/plugin.d.ts
-interface CoddleAccessSettings {
+interface AccessibilityToolkitSettings {
   enabled: boolean;
   language: string;
   primaryColor: string;
@@ -11,7 +11,8 @@ interface CoddleAccessSettings {
   positionMobile: "bottom-right" | "bottom-left" | "top-right" | "top-left";
   statementUrl: string;
 }
-declare const DEFAULT_SETTINGS: CoddleAccessSettings;
+type CoddleAccessSettings = AccessibilityToolkitSettings;
+declare const DEFAULT_SETTINGS: AccessibilityToolkitSettings;
 declare const SUPPORTED_LANGUAGES: {
   value: string;
   label: string;
@@ -149,7 +150,7 @@ declare const elements: {
     multiline: boolean | undefined;
   };
 };
-declare function renderAdminBlocks(settings: CoddleAccessSettings, previewUrl?: string): ({
+declare function renderAdminBlocks(settings: AccessibilityToolkitSettings, previewUrl?: string): ({
   type: "header";
   text: string;
 } | {
@@ -180,7 +181,7 @@ declare function renderAdminBlocks(settings: CoddleAccessSettings, previewUrl?: 
   type: "divider";
 })[];
 /**
- * Coddle Accessibility Toolkit - Sandboxed EmDash Plugin Entrypoint
+ * Accessibility Toolkit - Sandboxed EmDash Plugin Entrypoint
  *
  * Runs securely inside EmDash's workerd sandbox.
  * Provides custom Block Kit admin interface at /_emdash/admin/plugins/$id/settings,
@@ -189,4 +190,4 @@ declare function renderAdminBlocks(settings: CoddleAccessSettings, previewUrl?: 
  */
 declare const plugin: SandboxedPlugin;
 //#endregion
-export { CoddleAccessSettings, DEFAULT_SETTINGS, ICONS, POSITIONS, PRESET_COLORS, SIZES, SUPPORTED_LANGUAGES, blocks, plugin as default, elements, normalizeIconId, normalizePosition, renderAdminBlocks, toValid7CharHex };
+export { AccessibilityToolkitSettings, CoddleAccessSettings, DEFAULT_SETTINGS, ICONS, POSITIONS, PRESET_COLORS, SIZES, SUPPORTED_LANGUAGES, blocks, plugin as default, elements, normalizeIconId, normalizePosition, renderAdminBlocks, toValid7CharHex };

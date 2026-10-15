@@ -394,6 +394,28 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 		});
 	});
 
+	test("page:fragments hook injects frontend script when enabled and returns empty array when disabled", async () => {
+		const enabledCtx = createMockCtx({
+			enabled: true,
+			primaryColor: "#0369A1",
+			positionDesktop: "bottom-left",
+			language: "en",
+		});
+		const fragments = await plugin.hooks["page:fragments"]({ page: {} }, enabledCtx);
+		assert.ok(Array.isArray(fragments));
+		assert.equal(fragments.length, 1);
+		assert.equal(fragments[0].kind, "inline-script");
+		assert.equal(fragments[0].placement, "body:end");
+		assert.ok(fragments[0].code.includes("#0369A1"));
+		assert.ok(fragments[0].code.includes("bottom-left"));
+
+		const disabledCtx = createMockCtx({
+			enabled: false,
+		});
+		const disabledFragments = await plugin.hooks["page:fragments"]({ page: {} }, disabledCtx);
+		assert.deepEqual(disabledFragments, []);
+	});
+
 	test("listing assets and bundled files exist and respect size constraints", () => {
 		const rootDir = fs.existsSync(path.resolve(import.meta.dirname, "../icon.png"))
 			? path.resolve(import.meta.dirname, "..")
@@ -455,6 +477,118 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 		for (const lang of SUPPORTED_LANGUAGES) {
 			assert.ok(adminContent.includes(`code: '${lang.value}'`) || adminContent.includes(`code: "${lang.value}"`), `Admin UI includes language ${lang.value}`);
 		}
+	});
+
+	test("operations under registry installation ID (r_*) behave correctly", async () => {
+		const registryId = "r_rznxjv6huupd4i7d";
+		const registryCtx = {
+			plugin: { id: registryId },
+			log: {
+				info: () => {},
+				warn: () => {},
+				error: () => {},
+				debug: () => {},
+			},
+			settings: createMockSettings({
+				enabled: true,
+				primaryColor: "#0D9488",
+				language: "es",
+				iconId: "wheel",
+				iconSize: 56,
+				positionDesktop: "bottom-left",
+				positionMobile: "bottom-left",
+				statementUrl: "/declaracion-accesibilidad",
+			}),
+		};
+
+		// 1. Config route
+		const configRes = await plugin.routes.config.handler({}, registryCtx);
+		assert.equal(configRes.enabled, true);
+		assert.equal(configRes.primaryColor, "#0D9488");
+		assert.equal(configRes.language, "es");
+		assert.equal(configRes.iconId, "wheel");
+		assert.equal(configRes.iconSize, 56);
+		assert.equal(configRes.positionDesktop, "bottom-left");
+		assert.equal(configRes.positionMobile, "bottom-left");
+		assert.equal(configRes.statementUrl, "/declaracion-accesibilidad");
+
+		// 2. Snippet route targets registry ID
+		const snippetRes = await plugin.routes.snippet.handler({}, registryCtx);
+		assert.ok(snippetRes.dynamicLoader.includes(`/_emdash/api/plugins/${registryId}/config`));
+		assert.ok(snippetRes.html.includes("#0D9488"));
+		assert.ok(snippetRes.html.includes("bottom-left"));
+
+		// 3. Status route reflects registry ID
+		const statusRes = await plugin.routes.status.handler({}, registryCtx);
+		assert.equal(statusRes.status, "active");
+		assert.equal(statusRes.pluginId, registryId);
+
+		// 4. Admin page_load renders Block Kit with active settings
+		const adminLoad = await plugin.routes.admin.handler({ input: { type: "page_load" } }, registryCtx);
+		validateBlockResponse(adminLoad);
+		assert.ok(Array.isArray(adminLoad.blocks));
+
+		// 5. Admin form_submit persists updated settings under registry ID
+		const adminSubmit = await plugin.routes.admin.handler(
+			{
+				input: {
+					type: "form_submit",
+					values: {
+						enabled: false,
+						primaryColor: "#16A34A",
+						language: "fr",
+						iconId: "assist",
+						iconSize: "40",
+						positionDesktop: "top-right",
+						positionMobile: "top-right",
+						statementUrl: "/accessibilite",
+					},
+				},
+			},
+			registryCtx
+		);
+		validateBlockResponse(adminSubmit);
+		assert.equal(adminSubmit.toast?.type, "success");
+		assert.equal(await registryCtx.settings.get("enabled"), false);
+		assert.equal(await registryCtx.settings.get("primaryColor"), "#16A34A");
+		assert.equal(await registryCtx.settings.get("language"), "fr");
+		assert.equal(await registryCtx.settings.get("iconId"), "assist");
+		assert.equal(await registryCtx.settings.get("iconSize"), 40);
+		assert.equal(await registryCtx.settings.get("positionDesktop"), "top-right");
+		assert.equal(await registryCtx.settings.get("positionMobile"), "top-right");
+		assert.equal(await registryCtx.settings.get("statementUrl"), "/accessibilite");
+
+		// 6. Lifecycle hooks handle registry context without throwing
+		await assert.doesNotReject(async () => {
+			await plugin.hooks["plugin:install"]({ reason: "install" }, registryCtx);
+			await plugin.hooks["plugin:activate"]({ reason: "activate" }, registryCtx);
+			await plugin.hooks["plugin:deactivate"]({ reason: "deactivate" }, registryCtx);
+		});
+	});
+
+	test("companion Astro components support registry installation ID and asset fallback", () => {
+		const rootDir = fs.existsSync(path.resolve(import.meta.dirname, "../components"))
+			? path.resolve(import.meta.dirname, "..")
+			: path.resolve(".");
+
+		const coddleWidgetPath = path.resolve(rootDir, "components/CoddleAccessWidget.astro");
+		const a11yWidgetPath = path.resolve(rootDir, "components/AccessibilityWidget.astro");
+
+		assert.ok(fs.existsSync(coddleWidgetPath), "CoddleAccessWidget.astro must exist");
+		assert.ok(fs.existsSync(a11yWidgetPath), "AccessibilityWidget.astro must exist");
+
+		const coddleContent = fs.readFileSync(coddleWidgetPath, "utf-8");
+		const a11yContent = fs.readFileSync(a11yWidgetPath, "utf-8");
+
+		// Props include pluginId and cdnSrc
+		assert.ok(coddleContent.includes("pluginId?: string;"), "CoddleAccessWidget declares pluginId prop");
+		assert.ok(coddleContent.includes("cdnSrc?: string;"), "CoddleAccessWidget declares cdnSrc prop");
+		assert.ok(a11yContent.includes("pluginId?: string;"), "AccessibilityWidget declares pluginId prop");
+		assert.ok(a11yContent.includes("cdnSrc?: string;"), "AccessibilityWidget declares cdnSrc prop");
+
+		// Dynamic candidate endpoints prioritize pluginId
+		assert.ok(coddleContent.includes("/_emdash/api/plugins/\" + encodeURIComponent(pluginId) + \"/config"), "Prioritizes explicit pluginId endpoint");
+		assert.ok(coddleContent.includes("onerror"), "Handles script load failure with fallback/warning");
 	});
 });
 

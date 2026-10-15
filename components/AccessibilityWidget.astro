@@ -4,6 +4,7 @@
 import CoddleAccessWidget from "./CoddleAccessWidget.astro";
 
 interface Props {
+  pluginId?: string;
   enabled?: boolean;
   language?: string;
   primaryColor?: string;
@@ -13,6 +14,7 @@ interface Props {
   positionMobile?: "bottom-right" | "bottom-left" | "top-right" | "top-left";
   statementUrl?: string;
   scriptSrc?: string;
+  cdnSrc?: string;
   fontsUrl?: string;
   companyName?: string;
   website?: string;

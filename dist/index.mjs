@@ -10,13 +10,15 @@ const descriptor = Object.freeze({
 	"version": "1.3.1",
 	"format": "standard",
 	"entrypoint": "accessibility-toolkit/sandbox",
+	"adminEntry": "accessibility-toolkit/admin",
 	"capabilities": [],
 	"allowedHosts": [],
 	"storage": {},
 	"hooks": [
 		"plugin:install",
 		"plugin:activate",
-		"plugin:deactivate"
+		"plugin:deactivate",
+		"page:fragments"
 	],
 	"routes": [
 		{

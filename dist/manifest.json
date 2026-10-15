@@ -8,7 +8,8 @@
   "hooks": [
     "plugin:install",
     "plugin:activate",
-    "plugin:deactivate"
+    "plugin:deactivate",
+    "page:fragments"
   ],
   "routes": [
     {

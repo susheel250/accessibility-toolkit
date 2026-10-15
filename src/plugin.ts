@@ -204,20 +204,20 @@ export function renderAdminBlocks(
 			fields: [
 				elements.toggle("enabled", "Enable Accessibility Widget", {
 					description:
-						"When enabled, the accessibility widget and its standalone tools are rendered on all live public pages.",
+						"When enabled, the accessibility widget launcher and toolbar tools are rendered on all public website pages.",
 					initialValue: settings.enabled,
 				}),
-				elements.select("language", "Widget Language", SUPPORTED_LANGUAGES, {
+				elements.select("language", "Widget Language (12 Locales)", SUPPORTED_LANGUAGES, {
 					initialValue: settings.language,
 				}),
-				elements.textInput("primaryColor", "Widget Colour (Hex)", {
+				elements.textInput("primaryColor", `Widget Colour (Current: ${settings.primaryColor})`, {
 					placeholder: "#1863DC",
 					initialValue: settings.primaryColor,
 				}),
-				elements.select("iconId", "Widget Icon (Shape)", ICONS, {
+				elements.select("iconId", "Launcher Icon (Shape)", ICONS, {
 					initialValue: settings.iconId,
 				}),
-				elements.select("iconSize", "Button Size", SIZES, {
+				elements.select("iconSize", "Button Size (Diameter)", SIZES, {
 					initialValue: String(settings.iconSize),
 				}),
 				elements.select("positionDesktop", "Desktop Screen Position", POSITIONS, {
@@ -239,14 +239,23 @@ export function renderAdminBlocks(
 		blocks.divider(),
 		blocks.fields([
 			{
-				label: "Quick Palette Suggestions",
-				value:
-					"Default: #1863DC | Ishpeming: #0369A1 | Teal: #0D9488 | Indigo: #4F46E5 | Emerald: #16A34A | Slate: #0F172A",
+				label: "Active Settings Summary",
+				value: `Status: ${settings.enabled ? "Active (Enabled)" : "Disabled"} • Color: ${settings.primaryColor} • Icon: ${settings.iconId} (${settings.iconSize}px) • Desktop: ${settings.positionDesktop} • Mobile: ${settings.positionMobile}`,
 			},
 			{
-				label: "Compliance & Integration",
+				label: "Quick Palette Suggestions",
 				value:
-					"WCAG 2.2 AA / ADA Section 508 • Accessibility Suite for EmDash CMS websites",
+					"Ocean Blue: #1863DC | Ishpeming Blue: #0369A1 | Teal: #0D9488 | Indigo: #4F46E5 | Emerald: #16A34A | Slate Dark: #0F172A",
+			},
+			{
+				label: "Frontend Integration",
+				value:
+					"Automatic injection on all pages via page:fragments hook in <EmDashBodyEnd />. Also supports native companion component <AccessibilityWidget />.",
+			},
+			{
+				label: "Compliance Standards",
+				value:
+					"WCAG 2.2 Level AA & ADA Section 508 Compliant • Municipal & Enterprise Accessibility Suite",
 			},
 		]),
 	];
@@ -308,6 +317,100 @@ const plugin: SandboxedPlugin = {
 				pluginId: ctx.plugin.id,
 				event,
 			});
+		},
+		"page:fragments": async (_event, ctx) => {
+			const settings = await loadSavedSettings(ctx.settings);
+			if (!settings.enabled) return [];
+
+			const config = {
+				status: { mobile: true, desktop: true },
+				iconId: settings.iconId,
+				iconSize: settings.iconSize,
+				label: "Accessibility widget",
+				heading: "Accessibility Toolkit",
+				position: {
+					mobile: settings.positionMobile,
+					desktop: settings.positionDesktop,
+				},
+				language: {
+					default: settings.language,
+					selected: [],
+				},
+				margins: {
+					desktop: { top: 20, bottom: 20, left: 20, right: 20 },
+					mobile: { top: 20, bottom: 20, left: 20, right: 20 },
+				},
+				primaryColor: settings.primaryColor,
+				keyboard: {
+					enabled: true,
+					shortcut: "alt+a",
+				},
+				modules: {
+					color: {
+						darkContrast: { enabled: true },
+						lightContrast: { enabled: true },
+						highContrast: { enabled: true },
+						highSaturation: { enabled: true },
+						lowSaturation: { enabled: true },
+						monochrome: { enabled: true },
+					},
+					content: {
+						adjustFontSizing: { enabled: true },
+						highlightTitle: { enabled: true },
+						highlightLinks: { enabled: true },
+						dyslexicFont: { enabled: true },
+						letterSpacing: { enabled: true },
+						lineHeight: { enabled: true },
+						fontWeight: { enabled: true },
+						textAlign: { enabled: true },
+					},
+					navigation: {
+						readingGuide: { enabled: true },
+						pauseAnimations: { enabled: true },
+						bigCursor: { enabled: true },
+					},
+					statement: {
+						enabled: Boolean(settings.statementUrl),
+						url: settings.statementUrl,
+						displayInWidget: false,
+						generatedDate: "",
+						formData: {
+							companyName: "",
+							businessEmail: "",
+							website: "",
+							wcagStandard: "WCAG 2.2 Level AA",
+							conformanceStatus: "fully-conformant",
+						},
+					},
+					profiles: { enabled: true },
+					pageRead: { enabled: true },
+					muteSounds: { enabled: true },
+				},
+			};
+
+			const initScript = `(function() {
+  if (window.__accessibility_toolkit_initialized || window.__coddle_access_initialized) return;
+  window.__accessibility_toolkit_initialized = true;
+  window.__coddle_access_initialized = true;
+  window._cyA11yConfig = ${JSON.stringify(config)};
+  window._cyA11yAssets = {
+    fonts: '/vendor/coddle-access/fonts/'
+  };
+  var s = document.createElement('script');
+  s.id = 'accessibility-toolkit-script';
+  s.src = '/vendor/coddle-access/js/widget.min.js';
+  s.async = true;
+  (document.body || document.head).appendChild(s);
+})();`;
+
+			return [
+				{
+					kind: "inline-script",
+					placement: "body:end",
+					code: initScript,
+					key: "accessibility-toolkit-widget",
+				},
+			];
 		},
 	},
 	routes: {

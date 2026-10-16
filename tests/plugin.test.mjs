@@ -581,14 +581,15 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 		const a11yContent = fs.readFileSync(a11yWidgetPath, "utf-8");
 
 		// Props include pluginId and cdnSrc
-		assert.ok(coddleContent.includes("pluginId?: string;"), "CoddleAccessWidget declares pluginId prop");
-		assert.ok(coddleContent.includes("cdnSrc?: string;"), "CoddleAccessWidget declares cdnSrc prop");
 		assert.ok(a11yContent.includes("pluginId?: string;"), "AccessibilityWidget declares pluginId prop");
 		assert.ok(a11yContent.includes("cdnSrc?: string;"), "AccessibilityWidget declares cdnSrc prop");
+		assert.ok(coddleContent.includes("pluginId?: string;"), "CoddleAccessWidget declares pluginId prop");
+		assert.ok(coddleContent.includes("cdnSrc?: string;"), "CoddleAccessWidget declares cdnSrc prop");
 
-		// Dynamic candidate endpoints prioritize pluginId
-		assert.ok(coddleContent.includes("/_emdash/api/plugins/\" + encodeURIComponent(pluginId) + \"/config"), "Prioritizes explicit pluginId endpoint");
-		assert.ok(coddleContent.includes("onerror"), "Handles script load failure with fallback/warning");
+		// Dynamic candidate endpoints prioritize pluginId in AccessibilityWidget
+		assert.ok(a11yContent.includes("/_emdash/api/plugins/\" + encodeURIComponent(pluginId) + \"/config"), "Prioritizes explicit pluginId endpoint");
+		assert.ok(a11yContent.includes("onerror"), "Handles script load failure with fallback/warning");
+		assert.ok(coddleContent.includes("<AccessibilityWidget {...Astro.props} />"), "CoddleAccessWidget wraps AccessibilityWidget for backward compatibility");
 	});
 });
 

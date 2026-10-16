@@ -103,7 +103,7 @@ export function RenderIconSvg({ iconId, size = 28, color = 'currentColor' }: { i
       </svg>
     );
   }
-  // Default Coddle Access figure icon
+  // Default figure icon
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <circle cx="12" cy="4.5" r="2.5" fill={color} />
@@ -114,7 +114,7 @@ export function RenderIconSvg({ iconId, size = 28, color = 'currentColor' }: { i
   );
 }
 
-export function CoddleAccessAdminPage() {
+export function AccessibilityToolkitAdminPage() {
   const [enabled, setEnabled] = useState<boolean>(DEFAULT_SETTINGS.enabled);
   const [language, setLanguage] = useState<string>(DEFAULT_SETTINGS.language);
   const [primaryColor, setPrimaryColor] = useState<string>(DEFAULT_SETTINGS.primaryColor);
@@ -357,8 +357,9 @@ export function CoddleAccessAdminPage() {
   ];
 
   return (
-    <div className="coddle-access-admin-page accessiyes-admin-page" style={{ padding: "2rem 2.5rem", maxWidth: "880px", margin: "0 auto", fontFamily: "inherit" }}>
+    <div className="accessibility-toolkit-admin-page coddle-access-admin-page accessiyes-admin-page" style={{ padding: "2rem 2.5rem", maxWidth: "880px", margin: "0 auto", fontFamily: "inherit" }}>
       <style>{`
+        .accessibility-toolkit-admin-page,
         .coddle-access-admin-page,
         .accessiyes-admin-page {
           --ay-heading: var(--color-kumo-text, var(--text-color-kumo-heading, var(--foreground, #0f172a)));
@@ -372,6 +373,7 @@ export function CoddleAccessAdminPage() {
         }
 
         @media (prefers-color-scheme: dark) {
+          :root:not([data-mode="light"]):not([data-theme="light"]):not(.light) .accessibility-toolkit-admin-page,
           :root:not([data-mode="light"]):not([data-theme="light"]):not(.light) .coddle-access-admin-page,
           :root:not([data-mode="light"]):not([data-theme="light"]):not(.light) .accessiyes-admin-page {
             --ay-heading: var(--color-kumo-text, #f8fafc);
@@ -385,6 +387,12 @@ export function CoddleAccessAdminPage() {
           }
         }
 
+        [data-mode="dark"] .accessibility-toolkit-admin-page,
+        [data-theme="dark"] .accessibility-toolkit-admin-page,
+        .dark .accessibility-toolkit-admin-page,
+        :root.dark .accessibility-toolkit-admin-page,
+        html[data-mode="dark"] .accessibility-toolkit-admin-page,
+        body[data-mode="dark"] .accessibility-toolkit-admin-page,
         [data-mode="dark"] .coddle-access-admin-page,
         [data-theme="dark"] .coddle-access-admin-page,
         .dark .coddle-access-admin-page,
@@ -407,26 +415,31 @@ export function CoddleAccessAdminPage() {
           --ay-btn-hover-bg: var(--color-kumo-surface-hover, #334155);
         }
 
+        .accessibility-toolkit-admin-page .accessiyes-page-title,
         .coddle-access-admin-page .accessiyes-page-title,
         .accessiyes-admin-page .accessiyes-page-title {
           color: var(--ay-heading);
         }
 
+        .accessibility-toolkit-admin-page .accessiyes-page-description,
         .coddle-access-admin-page .accessiyes-page-description,
         .accessiyes-admin-page .accessiyes-page-description {
           color: var(--ay-description);
         }
 
+        .accessibility-toolkit-admin-page .accessiyes-breadcrumb,
         .coddle-access-admin-page .accessiyes-breadcrumb,
         .accessiyes-admin-page .accessiyes-breadcrumb {
           color: var(--ay-breadcrumb);
         }
 
+        .accessibility-toolkit-admin-page .accessiyes-breadcrumb .accessiyes-breadcrumb-active,
         .coddle-access-admin-page .accessiyes-breadcrumb .accessiyes-breadcrumb-active,
         .accessiyes-admin-page .accessiyes-breadcrumb .accessiyes-breadcrumb-active {
           color: var(--ay-breadcrumb-active);
         }
 
+        .accessibility-toolkit-admin-page .accessiyes-btn-preview,
         .coddle-access-admin-page .accessiyes-btn-preview,
         .accessiyes-admin-page .accessiyes-btn-preview {
           background: var(--ay-btn-bg);
@@ -434,6 +447,7 @@ export function CoddleAccessAdminPage() {
           color: var(--ay-btn-text);
         }
 
+        .accessibility-toolkit-admin-page .accessiyes-btn-preview:hover,
         .coddle-access-admin-page .accessiyes-btn-preview:hover,
         .accessiyes-admin-page .accessiyes-btn-preview:hover {
           background: var(--ay-btn-hover-bg);
@@ -441,7 +455,7 @@ export function CoddleAccessAdminPage() {
       `}</style>
 
       {/* Top Breadcrumb & Title */}
-      <div className="accessiyes-header-section coddle-header-section" style={{ marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
+      <div className="accessiyes-header-section accessibility-toolkit-header-section coddle-header-section" style={{ marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
         <div>
           <div className="accessiyes-breadcrumb" style={{ fontSize: "0.85rem", color: "var(--ay-breadcrumb, #64748b)", marginBottom: "0.45rem", display: "flex", gap: "0.4rem" }}>
             <span>Admin</span> / <span>Plugins</span> / <span className="accessiyes-breadcrumb-active" style={{ fontWeight: 600, color: "var(--ay-breadcrumb-active, #0f172a)" }}>Accessibility Toolkit</span>
@@ -1268,8 +1282,8 @@ export function CoddleAccessAdminPage() {
 }
 
 // EmDash Plugin Admin Registry Exports
-export const AccessibilityToolkitAdminPage = CoddleAccessAdminPage;
-export const AccessiYesAdminPage = CoddleAccessAdminPage;
+export const CoddleAccessAdminPage = AccessibilityToolkitAdminPage;
+export const AccessiYesAdminPage = AccessibilityToolkitAdminPage;
 
 export const pages: Record<string, React.ComponentType> = {
   "/settings": AccessibilityToolkitAdminPage,

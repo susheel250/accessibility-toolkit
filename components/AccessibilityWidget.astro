@@ -1,7 +1,7 @@
 ---
 // components/AccessibilityWidget.astro
 // Standalone Accessibility Toolkit Astro Companion Component
-import CoddleAccessWidget from "./CoddleAccessWidget.astro";
+// Compatible with any Astro or EmDash site
 
 interface Props {
   pluginId?: string;
@@ -19,6 +19,185 @@ interface Props {
   companyName?: string;
   website?: string;
 }
+
+const {
+  pluginId = "",
+  enabled = true,
+  language = "en",
+  primaryColor = "#1863DC",
+  iconId = "default",
+  iconSize = 48,
+  positionDesktop = "bottom-right",
+  positionMobile = "bottom-right",
+  statementUrl = "",
+  scriptSrc = "/vendor/coddle-access/js/widget.min.js",
+  cdnSrc = "",
+  fontsUrl = "/vendor/coddle-access/fonts/",
+  companyName = "",
+  website = "",
+} = Astro.props;
+
+const config = {
+  status: {
+    mobile: true,
+    desktop: true,
+  },
+  iconId: iconId,
+  iconSize: Number(iconSize),
+  label: "Accessibility widget",
+  heading: "Accessibility Toolkit",
+  position: {
+    mobile: positionMobile,
+    desktop: positionDesktop,
+  },
+  language: {
+    default: language,
+    selected: [],
+  },
+  margins: {
+    desktop: { top: 20, bottom: 20, left: 20, right: 20 },
+    mobile: { top: 20, bottom: 20, left: 20, right: 20 },
+  },
+  primaryColor: primaryColor,
+  keyboard: {
+    enabled: true,
+    shortcut: "alt+a",
+  },
+  modules: {
+    color: {
+      darkContrast: { enabled: true },
+      lightContrast: { enabled: true },
+      highContrast: { enabled: true },
+      highSaturation: { enabled: true },
+      lowSaturation: { enabled: true },
+      monochrome: { enabled: true },
+    },
+    content: {
+      adjustFontSizing: { enabled: true },
+      highlightTitle: { enabled: true },
+      highlightLinks: { enabled: true },
+      dyslexicFont: { enabled: true },
+      letterSpacing: { enabled: true },
+      lineHeight: { enabled: true },
+      fontWeight: { enabled: true },
+      textAlign: { enabled: true },
+    },
+    navigation: {
+      readingGuide: { enabled: true },
+      pauseAnimations: { enabled: true },
+      bigCursor: { enabled: true },
+    },
+    statement: {
+      enabled: Boolean(statementUrl),
+      url: statementUrl,
+      displayInWidget: false,
+      generatedDate: "",
+      formData: {
+        companyName: companyName,
+        businessEmail: "",
+        website: website,
+        wcagStandard: "WCAG 2.2 Level AA",
+        conformanceStatus: "fully-conformant",
+      },
+    },
+    profiles: { enabled: true },
+    pageRead: { enabled: true },
+    muteSounds: { enabled: true },
+  },
+};
 ---
 
-<CoddleAccessWidget {...Astro.props} />
+{enabled && (
+  <script is:inline define:vars={{ config, fontsUrl, scriptSrc, cdnSrc, pluginId }}>
+    (function() {
+      if (window.__accessibility_toolkit_initialized || window.__coddle_access_initialized || window.__accessiyes_initialized) return;
+      window.__accessibility_toolkit_initialized = true;
+      window.__coddle_access_initialized = true;
+      window.__accessiyes_initialized = true;
+
+      function mountWidget(activeConfig) {
+        window._cyA11yConfig = activeConfig || config;
+        window._cyA11yAssets = {
+          fonts: fontsUrl
+        };
+
+        if (!document.getElementById("accessibility-toolkit-script") && !document.getElementById("coddle-access-script")) {
+          var script = document.createElement("script");
+          script.id = "accessibility-toolkit-script";
+          script.type = "text/javascript";
+          script.src = scriptSrc;
+          script.async = true;
+          script.onerror = function() {
+            if (cdnSrc) {
+              console.warn("[Accessibility Toolkit] Local widget script not found at " + scriptSrc + ", falling back to CDN: " + cdnSrc);
+              var fallback = document.createElement("script");
+              fallback.id = "accessibility-toolkit-script-fallback";
+              fallback.type = "text/javascript";
+              fallback.src = cdnSrc;
+              fallback.async = true;
+              (document.body || document.head).appendChild(fallback);
+            } else {
+              console.warn("[Accessibility Toolkit] Widget script failed to load from " + scriptSrc + ". To use local assets, ensure files exist in public/vendor/coddle-access/ or configure scriptSrc/cdnSrc.");
+            }
+          };
+          (document.body || document.head).appendChild(script);
+        }
+      }
+
+      // If configuration was explicitly customized via props, mount immediately
+      if (config.primaryColor !== "#1863DC" || config.language.default !== "en" || config.iconId !== "default") {
+        mountWidget(config);
+        return;
+      }
+
+      // Candidate API endpoints for plugin settings (supports standalone, legacy, and registry IDs)
+      var endpoints = [];
+      if (pluginId) {
+        endpoints.push("/_emdash/api/plugins/" + encodeURIComponent(pluginId) + "/config");
+      }
+      endpoints.push(
+        "/_emdash/api/plugins/accessibility-toolkit/config",
+        "/_emdash/api/plugins/accessibility/config",
+        "/api/admin/accessibility"
+      );
+
+      function tryEndpoint(idx) {
+        if (idx >= endpoints.length) {
+          mountWidget(config);
+          return;
+        }
+        fetch(endpoints[idx])
+          .then(function(r) {
+            if (!r.ok) throw new Error("status " + r.status);
+            return r.json();
+          })
+          .then(function(res) {
+            var data = (res && res.data) || (res && res.settings) || res;
+            if (data && typeof data === "object") {
+              if (data.enabled === false) return; // disabled in settings
+              var merged = JSON.parse(JSON.stringify(config));
+              if (data.primaryColor) merged.primaryColor = data.primaryColor;
+              if (data.iconId) merged.iconId = data.iconId;
+              if (data.iconSize) merged.iconSize = Number(data.iconSize);
+              if (data.positionDesktop) merged.position.desktop = data.positionDesktop;
+              if (data.positionMobile) merged.position.mobile = data.positionMobile;
+              if (data.language) merged.language.default = data.language;
+              if (data.statementUrl) {
+                merged.modules.statement.enabled = true;
+                merged.modules.statement.url = data.statementUrl;
+              }
+              mountWidget(merged);
+            } else {
+              tryEndpoint(idx + 1);
+            }
+          })
+          .catch(function() {
+            tryEndpoint(idx + 1);
+          });
+      }
+
+      tryEndpoint(0);
+    })();
+  </script>
+)}
+

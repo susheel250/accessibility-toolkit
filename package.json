@@ -12,8 +12,9 @@
 			"types": "./dist/index.d.mts"
 		},
 		"./sandbox": "./dist/plugin.mjs",
-		"./widget": "./components/CoddleAccessWidget.astro",
+		"./widget": "./components/AccessibilityWidget.astro",
 		"./accessibility-widget": "./components/AccessibilityWidget.astro",
+		"./coddle-access-widget": "./components/CoddleAccessWidget.astro",
 		"./admin": "./admin/admin.tsx"
 	},
 	"files": [

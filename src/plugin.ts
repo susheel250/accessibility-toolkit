@@ -574,7 +574,7 @@ const plugin: SandboxedPlugin = {
     });
 })();
 </script>`,
-					companion: "In Astro layouts, you can also render the native companion <AccessibilityWidget /> or <CoddleAccessWidget />.",
+					companion: "In Astro layouts, you can also render the native companion <AccessibilityWidget /> (or legacy <CoddleAccessWidget />).",
 				};
 			},
 		},

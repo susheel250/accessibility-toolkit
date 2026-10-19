@@ -61,7 +61,7 @@ export const POSITIONS = [
 
 export const PRESET_COLORS = [
 	{ hex: "#1863DC", label: "Ocean Blue (Default)" },
-	{ hex: "#0369A1", label: "Ishpeming Township Blue" },
+	{ hex: "#0369A1", label: "Deep Ocean Blue" },
 	{ hex: "#0D9488", label: "Teal" },
 	{ hex: "#4F46E5", label: "Indigo" },
 	{ hex: "#16A34A", label: "Emerald" },
@@ -245,7 +245,7 @@ export function renderAdminBlocks(
 			{
 				label: "Quick Palette Suggestions",
 				value:
-					"Ocean Blue: #1863DC | Ishpeming Blue: #0369A1 | Teal: #0D9488 | Indigo: #4F46E5 | Emerald: #16A34A | Slate Dark: #0F172A",
+					"Ocean Blue: #1863DC | Deep Blue: #0369A1 | Teal: #0D9488 | Indigo: #4F46E5 | Emerald: #16A34A | Slate Dark: #0F172A",
 			},
 			{
 				label: "Frontend Integration",

@@ -183,7 +183,7 @@ export function AccessibilityToolkitAdminPage() {
         }
       }
 
-      // 3. Fallback to legacy custom route (e.g. Ishpeming Township)
+      // 3. Fallback to legacy custom route (e.g. host-level /api/admin/accessibility)
       if (!data) {
         try {
           const res = await fetch("/api/admin/accessibility", { cache: "no-store" });
@@ -302,7 +302,7 @@ export function AccessibilityToolkitAdminPage() {
         }
       }
 
-      // 2. Also sync to legacy custom endpoint if present on server (e.g. Ishpeming Township /api/admin/accessibility)
+      // 2. Also sync to legacy custom endpoint if present on server (e.g. host-level /api/admin/accessibility)
       try {
         const res = await fetch("/api/admin/accessibility", {
           method: "POST",

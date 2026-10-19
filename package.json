@@ -19,8 +19,11 @@
 	},
 	"files": [
 		"dist",
+		"!dist/*.tar.gz",
+		"!dist/*.tgz",
 		"emdash-plugin.jsonc",
 		"README.md",
+		"REGISTRY-INSTALLATION.md",
 		"CHANGELOG.md",
 		"LICENSE",
 		"icon.png",

@@ -399,18 +399,26 @@ const plugin: SandboxedPlugin = {
 				},
 			};
 
+			const hasCdn = Boolean(settings.cdnBaseUrl && settings.cdnBaseUrl.startsWith("https://"));
+			const cdnBase = hasCdn ? settings.cdnBaseUrl.replace(/\/+$/, "") : "";
+			const primarySrc = cdnBase ? `${cdnBase}/js/widget.min.js` : "/vendor/coddle-access/js/widget.min.js";
+			const fallbackSrc = cdnBase ? "/vendor/coddle-access/js/widget.min.js" : "";
+			const fontsSrc = cdnBase ? `${cdnBase}/fonts/` : "/vendor/coddle-access/fonts/";
+
 			const initScript = `(function() {
   if (window.__accessibility_toolkit_initialized || window.__coddle_access_initialized) return;
   window.__accessibility_toolkit_initialized = true;
   window.__coddle_access_initialized = true;
   window._cyA11yConfig = ${JSON.stringify(config)};
   window._cyA11yAssets = {
-    fonts: '/vendor/coddle-access/fonts/'
+    fonts: '${fontsSrc}'
   };
   var s = document.createElement('script');
   s.id = 'accessibility-toolkit-script';
-  s.src = '/vendor/coddle-access/js/widget.min.js';
+  s.src = '${primarySrc}';
   s.async = true;
+  ${cdnBase ? "s.integrity = '" + WIDGET_SRI_HASH + "'; s.crossOrigin = 'anonymous';" : ""}
+  ${fallbackSrc ? "s.onerror = function() { var fb = document.createElement('script'); fb.id = 'accessibility-toolkit-script-fallback'; fb.src = '" + fallbackSrc + "'; fb.async = true; (document.body || document.head).appendChild(fb); };" : ""}
   (document.body || document.head).appendChild(s);
 })();`;
 
@@ -477,6 +485,12 @@ const plugin: SandboxedPlugin = {
 						validationErrors.push("Accessibility statement must be a valid URL or path (e.g. /accessibility-statement)");
 					}
 
+					// Validate CDN Base URL
+					const rawCdnUrl = String(values.cdnBaseUrl || "").trim();
+					if (rawCdnUrl && !rawCdnUrl.startsWith("https://")) {
+						validationErrors.push("Custom CDN Base URL must be a valid HTTPS URL (e.g. https://your-cdn.example.com/assets)");
+					}
+
 					if (validationErrors.length > 0) {
 						return {
 							blocks: [
@@ -504,6 +518,7 @@ const plugin: SandboxedPlugin = {
 						positionDesktop: normalizePosition(values.positionDesktop ?? currentSettings.positionDesktop),
 						positionMobile: normalizePosition(values.positionMobile ?? currentSettings.positionMobile),
 						statementUrl: rawUrl,
+						cdnBaseUrl: rawCdnUrl,
 					};
 
 					// Persist to EmDash settings store
@@ -515,6 +530,7 @@ const plugin: SandboxedPlugin = {
 					await ctx.settings.set("positionDesktop", updatedSettings.positionDesktop);
 					await ctx.settings.set("positionMobile", updatedSettings.positionMobile);
 					await ctx.settings.set("statementUrl", updatedSettings.statementUrl);
+					await ctx.settings.set("cdnBaseUrl", updatedSettings.cdnBaseUrl);
 
 					ctx.log.info("Accessibility settings updated", {
 						pluginId: ctx.plugin.id,

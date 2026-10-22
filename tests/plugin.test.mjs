@@ -182,6 +182,7 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 				positionDesktop: "bottom-left",
 				positionMobile: "top-left",
 				statementUrl: "https://example.com/accessibility",
+				cdnBaseUrl: "https://cdn.jsdelivr.net/gh/susheel250/coddle-accessibility@v1.3.4/vendor/coddle-access",
 			},
 		};
 
@@ -202,6 +203,7 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 		assert.equal(await mockCtx.settings.get("positionDesktop"), "bottom-left");
 		assert.equal(await mockCtx.settings.get("positionMobile"), "top-left");
 		assert.equal(await mockCtx.settings.get("statementUrl"), "https://example.com/accessibility");
+		assert.equal(await mockCtx.settings.get("cdnBaseUrl"), "https://cdn.jsdelivr.net/gh/susheel250/coddle-accessibility@v1.3.4/vendor/coddle-access");
 
 		// Now verify config route returns updated settings
 		const config = await plugin.routes.config.handler({}, mockCtx);
@@ -211,6 +213,7 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 		assert.equal(config.iconId, "wheel");
 		assert.equal(config.iconSize, 56);
 		assert.equal(config.positionDesktop, "bottom-left");
+		assert.equal(config.cdnBaseUrl, "https://cdn.jsdelivr.net/gh/susheel250/coddle-accessibility@v1.3.4/vendor/coddle-access");
 	});
 
 	test("admin route rejects invalid settings safely without breaking state", async () => {

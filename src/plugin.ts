@@ -1,5 +1,7 @@
 import type { SandboxedPlugin } from "emdash/plugin";
 
+export const WIDGET_SRI_HASH = "sha384-PkHCo9yYYt43CM9mczXrTqkNN0ddgEpZos0hrTEP62/Iox7z6iWI3CfR06lzbWdK";
+
 export interface AccessibilityToolkitSettings {
 	enabled: boolean;
 	language: string;
@@ -9,6 +11,7 @@ export interface AccessibilityToolkitSettings {
 	positionDesktop: "bottom-right" | "bottom-left" | "top-right" | "top-left";
 	positionMobile: "bottom-right" | "bottom-left" | "top-right" | "top-left";
 	statementUrl: string;
+	cdnBaseUrl?: string;
 }
 
 export type CoddleAccessSettings = AccessibilityToolkitSettings;
@@ -22,6 +25,7 @@ export const DEFAULT_SETTINGS: AccessibilityToolkitSettings = {
 	positionDesktop: "bottom-right",
 	positionMobile: "bottom-right",
 	statementUrl: "/accessibility-statement",
+	cdnBaseUrl: "",
 };
 
 export const SUPPORTED_LANGUAGES = [
@@ -226,6 +230,10 @@ export function renderAdminBlocks(
 				elements.select("positionMobile", "Mobile Screen Position", POSITIONS, {
 					initialValue: settings.positionMobile,
 				}),
+				elements.textInput("cdnBaseUrl", "Custom CDN Base URL (Optional)", {
+					placeholder: "https://your-cdn.example.com/assets",
+					initialValue: settings.cdnBaseUrl || "",
+				}),
 				elements.textInput("statementUrl", "Accessibility Statement URL", {
 					placeholder: "/accessibility-statement or https://example.com/accessibility-statement",
 					initialValue: settings.statementUrl,
@@ -277,6 +285,8 @@ async function loadSavedSettings(settingsAccess: any): Promise<AccessibilityTool
 	);
 	const statementUrl =
 		(await settingsAccess.get("statementUrl")) ?? DEFAULT_SETTINGS.statementUrl;
+	const cdnBaseUrlRaw = await settingsAccess.get("cdnBaseUrl");
+	const cdnBaseUrl = typeof cdnBaseUrlRaw === "string" ? cdnBaseUrlRaw.trim() : "";
 
 	return {
 		enabled: Boolean(enabled),
@@ -287,6 +297,7 @@ async function loadSavedSettings(settingsAccess: any): Promise<AccessibilityTool
 		positionDesktop,
 		positionMobile,
 		statementUrl: String(statementUrl || ""),
+		cdnBaseUrl,
 	};
 }
 
@@ -533,9 +544,10 @@ const plugin: SandboxedPlugin = {
 
 				return {
 					...settings,
-					version: "1.3.2",
+					version: "1.3.4",
 					toolkit: "Accessibility Toolkit",
 					publisher: "EmDash Community",
+					sri: WIDGET_SRI_HASH,
 				};
 			},
 		},
@@ -544,18 +556,28 @@ const plugin: SandboxedPlugin = {
 			methods: ["GET"],
 			handler: async (_routeCtx, ctx) => {
 				const settings = await loadSavedSettings(ctx.settings);
+				const hasCdn = Boolean(settings.cdnBaseUrl && settings.cdnBaseUrl.startsWith("https://"));
+				const cdnBase = hasCdn ? settings.cdnBaseUrl.replace(/\/+$/, "") : "";
+				const cdnScriptUrl = hasCdn ? `${cdnBase}/js/widget.min.js` : null;
 
 				return {
 					enabled: settings.enabled,
+					mode: hasCdn ? "cdn" : "local",
+					cdnConfigured: hasCdn,
+					sri: WIDGET_SRI_HASH,
 					html: `<script src="/vendor/coddle-access/js/widget.min.js" data-color="${settings.primaryColor}" data-position="${settings.positionDesktop}" data-lang="${settings.language}" async></script>`,
-					cdnHtml: `<script src="/vendor/coddle-access/js/widget.min.js" data-color="${settings.primaryColor}" data-position="${settings.positionDesktop}" data-lang="${settings.language}" async></script>`,
+					cdnHtml: hasCdn
+						? `<script src="${cdnScriptUrl}" integrity="${WIDGET_SRI_HASH}" crossorigin="anonymous" data-color="${settings.primaryColor}" data-position="${settings.positionDesktop}" data-lang="${settings.language}" async></script>`
+						: null,
 					dynamicLoader: `<script>
 (function() {
+  if (window.__accessibility_toolkit_initialized) return;
+  window.__accessibility_toolkit_initialized = true;
   fetch('/_emdash/api/plugins/${ctx.plugin.id}/config')
-    .then(function(r) { return r.json(); })
+    .then(function(r) { return r.ok ? r.json() : null; })
     .then(function(res) {
       var cfg = (res && res.data) || res;
-      if (!cfg || !cfg.enabled) return;
+      if (!cfg || cfg.enabled === false) return;
       window._cyA11yConfig = {
         primaryColor: cfg.primaryColor,
         iconId: cfg.iconId,
@@ -564,17 +586,43 @@ const plugin: SandboxedPlugin = {
         statementUrl: cfg.statementUrl,
         language: { default: cfg.language }
       };
+      var cdnBase = (cfg.cdnBaseUrl && cfg.cdnBaseUrl.startsWith('https://')) ? cfg.cdnBaseUrl.replace(/\\/+$/, '') : '';
+      var primarySrc = cdnBase ? cdnBase + '/js/widget.min.js' : '/vendor/coddle-access/js/widget.min.js';
+      var fallbackSrc = cdnBase ? '/vendor/coddle-access/js/widget.min.js' : '';
       window._cyA11yAssets = {
-        fonts: '/vendor/coddle-access/fonts/'
+        fonts: cdnBase ? cdnBase + '/fonts/' : '/vendor/coddle-access/fonts/'
       };
       var s = document.createElement('script');
-      s.src = '/vendor/coddle-access/js/widget.min.js';
+      s.id = 'accessibility-toolkit-script';
+      s.src = primarySrc;
       s.async = true;
+      if (cdnBase) {
+        s.integrity = '${WIDGET_SRI_HASH}';
+        s.crossOrigin = 'anonymous';
+      }
+      s.onerror = function() {
+        if (fallbackSrc) {
+          console.warn('[Accessibility Toolkit] Primary CDN script failed to load from ' + primarySrc + ', attempting local fallback: ' + fallbackSrc);
+          var fb = document.createElement('script');
+          fb.id = 'accessibility-toolkit-script-fallback';
+          fb.src = fallbackSrc;
+          fb.async = true;
+          fb.onerror = function() {
+            console.warn('[Accessibility Toolkit] Both CDN and local fallback widget scripts failed to load. Ensure assets exist in public/vendor/coddle-access/ or check CDN availability.');
+          };
+          (document.body || document.head).appendChild(fb);
+        } else {
+          console.warn('[Accessibility Toolkit] Widget script failed to load from ' + primarySrc + '. Ensure vendor assets exist in public/vendor/coddle-access/ or configure a valid CDN URL.');
+        }
+      };
       (document.body || document.head).appendChild(s);
+    })
+    .catch(function(err) {
+      console.warn('[Accessibility Toolkit] Failed to load configuration:', err);
     });
 })();
 </script>`,
-					companion: "In Astro layouts, you can also render the native companion <AccessibilityWidget /> (or legacy <CoddleAccessWidget />).",
+					companion: "In Astro layouts, you can also render the native companion <AccessibilityWidget />.",
 				};
 			},
 		},
@@ -585,7 +633,7 @@ const plugin: SandboxedPlugin = {
 				return {
 					status: "active",
 					pluginId: ctx.plugin.id,
-					version: "1.3.2",
+					version: "1.3.4",
 					brand: "Accessibility Toolkit",
 					vendor: "EmDash Community",
 					website: "https://emdashcms.com",

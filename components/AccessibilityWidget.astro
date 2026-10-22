@@ -1,7 +1,7 @@
 ---
 // components/AccessibilityWidget.astro
-// Standalone Accessibility Toolkit Astro Companion Component
-// Compatible with any Astro or EmDash site
+// Supported EmDash Host Integration for Accessibility Toolkit
+// Loads dynamic configuration from the installed plugin and mounts the accessibility widget
 
 interface Props {
   pluginId?: string;
@@ -16,12 +16,13 @@ interface Props {
   scriptSrc?: string;
   cdnSrc?: string;
   fontsUrl?: string;
+  integrity?: string;
   companyName?: string;
   website?: string;
 }
 
 const {
-  pluginId = "",
+  pluginId = "r_rznxjv6huupd4i7d",
   enabled = true,
   language = "en",
   primaryColor = "#1863DC",
@@ -33,6 +34,7 @@ const {
   scriptSrc = "/vendor/coddle-access/js/widget.min.js",
   cdnSrc = "",
   fontsUrl = "/vendor/coddle-access/fonts/",
+  integrity = "sha384-PkHCo9yYYt43CM9mczXrTqkNN0ddgEpZos0hrTEP62/Iox7z6iWI3CfR06lzbWdK",
   companyName = "",
   website = "",
 } = Astro.props;
@@ -108,61 +110,96 @@ const config = {
 ---
 
 {enabled && (
-  <script is:inline define:vars={{ config, fontsUrl, scriptSrc, cdnSrc, pluginId }}>
+  <script is:inline define:vars={{ config, fontsUrl, scriptSrc, cdnSrc, integrity, pluginId }}>
+    // @ts-nocheck
     (function() {
-      if (window.__accessibility_toolkit_initialized || window.__coddle_access_initialized || window.__accessiyes_initialized) return;
+      // Prevent duplicate script loading and initialization
+      if (window.__accessibility_toolkit_initialized || window.__coddle_access_initialized || window.__accessiyes_initialized) {
+        return;
+      }
       window.__accessibility_toolkit_initialized = true;
       window.__coddle_access_initialized = true;
       window.__accessiyes_initialized = true;
 
       function mountWidget(activeConfig) {
         window._cyA11yConfig = activeConfig || config;
+
+        // Resolve fonts URL: custom fontsUrl > activeConfig.cdnBaseUrl > default
+        var activeFontsUrl = fontsUrl;
+        if (activeConfig && activeConfig.cdnBaseUrl && activeConfig.cdnBaseUrl.startsWith("https://") && fontsUrl === "/vendor/coddle-access/fonts/") {
+          activeFontsUrl = activeConfig.cdnBaseUrl.replace(/\/+$/, "") + "/fonts/";
+        }
         window._cyA11yAssets = {
-          fonts: fontsUrl
+          fonts: activeFontsUrl
         };
 
-        if (!document.getElementById("accessibility-toolkit-script") && !document.getElementById("coddle-access-script")) {
-          var script = document.createElement("script");
-          script.id = "accessibility-toolkit-script";
-          script.type = "text/javascript";
-          script.src = scriptSrc;
-          script.async = true;
-          script.onerror = function() {
-            if (cdnSrc) {
-              console.warn("[Accessibility Toolkit] Local widget script not found at " + scriptSrc + ", falling back to CDN: " + cdnSrc);
-              var fallback = document.createElement("script");
-              fallback.id = "accessibility-toolkit-script-fallback";
-              fallback.type = "text/javascript";
-              fallback.src = cdnSrc;
-              fallback.async = true;
-              (document.body || document.head).appendChild(fallback);
-            } else {
-              console.warn("[Accessibility Toolkit] Widget script failed to load from " + scriptSrc + ". To use local assets, ensure files exist in public/vendor/coddle-access/ or configure scriptSrc/cdnSrc.");
-            }
-          };
-          (document.body || document.head).appendChild(script);
+        if (document.getElementById("accessibility-toolkit-script") || document.getElementById("coddle-access-script")) {
+          return;
         }
+
+        // Determine primary and fallback script URLs
+        var primarySrc = scriptSrc;
+        var fallbackSrc = "";
+        var useSri = false;
+
+        if (cdnSrc) {
+          primarySrc = cdnSrc;
+          fallbackSrc = scriptSrc;
+          useSri = true;
+        } else if (activeConfig && activeConfig.cdnBaseUrl && activeConfig.cdnBaseUrl.startsWith("https://")) {
+          primarySrc = activeConfig.cdnBaseUrl.replace(/\/+$/, "") + "/js/widget.min.js";
+          fallbackSrc = scriptSrc;
+          useSri = true;
+        }
+
+        var script = document.createElement("script");
+        script.id = "accessibility-toolkit-script";
+        script.type = "text/javascript";
+        script.src = primarySrc;
+        script.async = true;
+
+        if (useSri && integrity) {
+          script.integrity = integrity;
+          script.crossOrigin = "anonymous";
+        }
+
+        script.onerror = function() {
+          if (fallbackSrc) {
+            console.warn("[Accessibility Toolkit] Primary script failed to load from " + primarySrc + ", attempting local fallback: " + fallbackSrc);
+            var fallback = document.createElement("script");
+            fallback.id = "accessibility-toolkit-script-fallback";
+            fallback.type = "text/javascript";
+            fallback.src = fallbackSrc;
+            fallback.async = true;
+            fallback.onerror = function() {
+              console.warn("[Accessibility Toolkit] Both primary (" + primarySrc + ") and fallback (" + fallbackSrc + ") failed to load. Ensure assets exist in public/vendor/coddle-access/ or check CDN availability.");
+            };
+            (document.body || document.head).appendChild(fallback);
+          } else {
+            console.warn("[Accessibility Toolkit] Widget script failed to load from " + primarySrc + ". To use local assets, ensure files exist in public/vendor/coddle-access/ or configure a valid CDN URL.");
+          }
+        };
+
+        (document.body || document.head).appendChild(script);
       }
 
-      // If configuration was explicitly customized via props, mount immediately
-      if (config.primaryColor !== "#1863DC" || config.language.default !== "en" || config.iconId !== "default") {
-        mountWidget(config);
-        return;
-      }
-
-      // Candidate API endpoints for plugin settings (supports standalone, legacy, and registry IDs)
+      // Candidate API endpoints for plugin settings (supports registry ID, slug, and legacy aliases)
       var endpoints = [];
       if (pluginId) {
         endpoints.push("/_emdash/api/plugins/" + encodeURIComponent(pluginId) + "/config");
       }
       endpoints.push(
         "/_emdash/api/plugins/accessibility-toolkit/config",
-        "/_emdash/api/plugins/accessibility/config",
-        "/api/admin/accessibility"
+        "/_emdash/api/plugins/accessibility/config"
       );
 
       function tryEndpoint(idx) {
         if (idx >= endpoints.length) {
+          if (pluginId) {
+            console.warn("[Accessibility Toolkit] Plugin endpoint unreachable for pluginId: " + pluginId + ". Widget will not be mounted.");
+            return;
+          }
+          // In standalone mode (no pluginId), mount with component props
           mountWidget(config);
           return;
         }
@@ -174,7 +211,10 @@ const config = {
           .then(function(res) {
             var data = (res && res.data) || (res && res.settings) || res;
             if (data && typeof data === "object") {
-              if (data.enabled === false) return; // disabled in settings
+              // Master toggle check: if disabled in plugin settings, halt immediately
+              if (data.enabled === false) {
+                return;
+              }
               var merged = JSON.parse(JSON.stringify(config));
               if (data.primaryColor) merged.primaryColor = data.primaryColor;
               if (data.iconId) merged.iconId = data.iconId;
@@ -182,6 +222,7 @@ const config = {
               if (data.positionDesktop) merged.position.desktop = data.positionDesktop;
               if (data.positionMobile) merged.position.mobile = data.positionMobile;
               if (data.language) merged.language.default = data.language;
+              if (data.cdnBaseUrl) merged.cdnBaseUrl = data.cdnBaseUrl;
               if (data.statementUrl) {
                 merged.modules.statement.enabled = true;
                 merged.modules.statement.url = data.statementUrl;
@@ -200,4 +241,3 @@ const config = {
     })();
   </script>
 )}
-

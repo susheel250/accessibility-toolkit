@@ -1,6 +1,7 @@
 import { SandboxedPlugin } from "emdash/plugin";
 
 //#region src/plugin.d.ts
+declare const WIDGET_SRI_HASH = "sha384-PkHCo9yYYt43CM9mczXrTqkNN0ddgEpZos0hrTEP62/Iox7z6iWI3CfR06lzbWdK";
 interface AccessibilityToolkitSettings {
   enabled: boolean;
   language: string;
@@ -10,6 +11,7 @@ interface AccessibilityToolkitSettings {
   positionDesktop: "bottom-right" | "bottom-left" | "top-right" | "top-left";
   positionMobile: "bottom-right" | "bottom-left" | "top-right" | "top-left";
   statementUrl: string;
+  cdnBaseUrl?: string;
 }
 type CoddleAccessSettings = AccessibilityToolkitSettings;
 declare const DEFAULT_SETTINGS: AccessibilityToolkitSettings;
@@ -190,4 +192,4 @@ declare function renderAdminBlocks(settings: AccessibilityToolkitSettings, previ
  */
 declare const plugin: SandboxedPlugin;
 //#endregion
-export { AccessibilityToolkitSettings, CoddleAccessSettings, DEFAULT_SETTINGS, ICONS, POSITIONS, PRESET_COLORS, SIZES, SUPPORTED_LANGUAGES, blocks, plugin as default, elements, normalizeIconId, normalizePosition, renderAdminBlocks, toValid7CharHex };
+export { AccessibilityToolkitSettings, CoddleAccessSettings, DEFAULT_SETTINGS, ICONS, POSITIONS, PRESET_COLORS, SIZES, SUPPORTED_LANGUAGES, WIDGET_SRI_HASH, blocks, plugin as default, elements, normalizeIconId, normalizePosition, renderAdminBlocks, toValid7CharHex };

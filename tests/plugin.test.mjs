@@ -1,3 +1,5 @@
+import crypto from "node:crypto";
+function awaitImportCrypto() { return crypto; }
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { validateBlockResponse } from "@emdash-cms/blocks/server";
@@ -52,7 +54,7 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 		const manifest = JSON.parse(jsonClean);
 
 		assert.equal(manifest.slug, "accessibility-toolkit");
-		assert.equal(manifest.version, "1.3.2");
+		assert.equal(manifest.version, "1.3.4");
 		assert.equal(manifest.license, "MIT");
 		assert.equal(manifest.name, "Accessibility Toolkit");
 		assert.ok(manifest.publisher.startsWith("did:plc:"));
@@ -156,7 +158,8 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 		const form = result.blocks.find((b) => b.type === "form");
 		assert.ok(form);
 		assert.equal(form.submit.action_id, "save_settings");
-		assert.equal(form.fields.length, 8);
+		assert.equal(form.fields.length, 9);
+		assert.ok(form.fields.some(f => f.action_id === "cdnBaseUrl"), "Must include cdnBaseUrl field");
 
 		// Schema validation against EmDash Block Kit policy
 		const validation = validateBlockResponse(result);
@@ -250,11 +253,11 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 		assert.equal(result.positionDesktop, "bottom-right");
 		assert.equal(result.positionMobile, "bottom-right");
 		assert.equal(result.language, "en");
-		assert.equal(result.version, "1.3.2");
+		assert.equal(result.version, "1.3.4");
 		assert.equal(result.toolkit, "Accessibility Toolkit");
 	});
 
-	test("snippet route returns HTML embed tags reflecting saved settings", async () => {
+	test("snippet route returns HTML embed tags reflecting saved settings in local mode", async () => {
 		assert.ok(plugin.routes.snippet);
 		assert.equal(plugin.routes.snippet.public, true);
 
@@ -266,17 +269,47 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 
 		const result = await plugin.routes.snippet.handler({}, mockCtx);
 		assert.equal(result.enabled, true);
+		assert.equal(result.mode, "local");
+		assert.equal(result.cdnConfigured, false);
+		assert.equal(result.cdnHtml, null);
+		assert.ok(result.sri.startsWith("sha384-"));
 		assert.ok(result.html.includes("data-color=\"#0D9488\""));
 		assert.ok(result.html.includes("data-position=\"bottom-left\""));
 		assert.ok(result.html.includes("data-lang=\"fr\""));
 		assert.ok(result.dynamicLoader.includes(`fetch('/_emdash/api/plugins/${mockCtx.plugin.id}/config')`));
+		assert.ok(result.dynamicLoader.includes("window.__accessibility_toolkit_initialized"));
+	});
+
+	test("snippet route generates versioned CDN URLs with SRI attributes when CDN is configured", async () => {
+		const mockCtx = createMockCtx({
+			primaryColor: "#1863DC",
+			positionDesktop: "bottom-right",
+			language: "en",
+			cdnBaseUrl: "https://cdn.example.com/accessibility-toolkit/v1.3.4",
+		});
+
+		const result = await plugin.routes.snippet.handler({}, mockCtx);
+		assert.equal(result.enabled, true);
+		assert.equal(result.mode, "cdn");
+		assert.equal(result.cdnConfigured, true);
+		assert.ok(result.cdnHtml);
+		assert.ok(result.cdnHtml.includes("https://cdn.example.com/accessibility-toolkit/v1.3.4/js/widget.min.js"));
+		assert.ok(result.cdnHtml.includes('integrity="sha384-'));
+		assert.ok(result.cdnHtml.includes('crossorigin="anonymous"'));
+	});
+
+	test("SRI hash in plugin source matches exact published widget.min.js asset", () => {
+		const crypto = awaitImportCrypto();
+		const jsContent = fs.readFileSync(new URL("../vendor/coddle-access/js/widget.min.js", import.meta.url));
+		const actualHash = "sha384-" + crypto.createHash("sha384").update(jsContent).digest("base64");
+		assert.equal(actualHash, "sha384-PkHCo9yYYt43CM9mczXrTqkNN0ddgEpZos0hrTEP62/Iox7z6iWI3CfR06lzbWdK");
 	});
 
 	test("status route returns active plugin health telemetry", async () => {
 		assert.ok(plugin.routes.status);
 		const result = await plugin.routes.status.handler({}, createMockCtx());
 		assert.equal(result.status, "active");
-		assert.equal(result.version, "1.3.2");
+		assert.equal(result.version, "1.3.4");
 		assert.equal(result.brand, "Accessibility Toolkit");
 		assert.equal(result.vendor, "EmDash Community");
 	});

@@ -43,7 +43,7 @@ The **Accessibility Toolkit** is an EmDash Registry plugin that provides website
 ### Package Registry Metadata
 - **Package Slug**: `accessibility-toolkit`
 - **Publisher Handle / DID**: `@susheel-k.bsky.social` (`did:plc:pcngdskjcwsettdojdho2dtr`)
-- **Package Version**: `1.3.2`
+- **Package Version**: `1.3.3`
 - **Registry Publication Status**: Currently unpublished / unlisted from the public registry (available via private/local testing and tarball package archive)
 - **Runtime Environment**: EmDash Sandboxed Plugin (`workerd` isolation) + Astro Theme Companion
 
@@ -127,7 +127,7 @@ In your EmDash website root directory (`/path/to/your-emdash-site`), install the
 npm install /path/to/accessibility-toolkit-repository
 
 # Method B: Packaged tarball installation (Private / Staging)
-npm install /path/to/accessibility-toolkit-1.3.2.tgz
+npm install /path/to/accessibility-toolkit-1.3.3.tgz
 
 # Method C: Standard registry installation (Reference only; active when published publicly)
 npm install accessibility-toolkit
@@ -349,35 +349,43 @@ Add the returned dynamic loader script before the closing `</body>` tag:
 ## 9. CDN Configuration
 
 ### Remote CDN Hosting Architecture
-If you prefer to host static assets on a remote Content Delivery Network (CDN) or external storage bucket (such as AWS CloudFront/S3, Cloudflare R2, or a dedicated asset domain) rather than copying them locally to `public/vendor/`, configure `<AccessibilityWidget />` using the `scriptSrc` and `fontsUrl` props.
+If you prefer to host static assets on a remote Content Delivery Network (CDN) or external storage bucket (such as Cloudflare R2, AWS CloudFront/S3, or a dedicated asset domain) rather than copying them locally to `public/vendor/`, configure the **Custom CDN Base URL** (`cdnBaseUrl`) setting in the EmDash admin dashboard or via component props.
 
 > [!WARNING]
-> **CDN Availability & Verification Notice:**  
-> Public npm-mirrored CDN endpoints (such as `cdn.jsdelivr.net/npm/accessibility-toolkit@1.3.2/...`) are **unverified illustrative examples** and are **not currently active or supported** out of the box because `accessibility-toolkit@1.3.2` is not distributed on the public npm registry.  
+> **CDN Availability & Deployment Notice:**  
+> Public npm-mirrored CDN endpoints (such as `cdn.jsdelivr.net/npm/accessibility-toolkit@1.3.4/...`) are unlisted because `accessibility-toolkit` is distributed through the ATProto-based EmDash Plugin Registry rather than public npm.  
 > 
-> Teams using remote CDN hosting must first upload the vendor files (`vendor/coddle-access/`) to their own verified CDN or object storage service before referencing those URLs.
+> To use CDN delivery, teams must upload the vendor assets (`vendor/coddle-access/`) to their own verified CDN or object storage service, configure CORS (`Access-Control-Allow-Origin: *`), and set the `cdnBaseUrl` setting in EmDash.
 
-### Custom CDN Configuration Example
-To load assets from your team's verified custom CDN or asset storage:
+### Subresource Integrity (SRI) & Caching Specifications
+For production CDN deployments, serve immutable, version-pinned assets with the following verified cryptographic hashes and HTTP response headers:
+
+| Asset | Size | Recommended Cache-Control | SHA-384 Subresource Integrity (SRI) |
+|---|---|---|---|
+| `js/widget.min.js` | 365,749 B | `public, max-age=31536000, immutable` | `sha384-PkHCo9yYYt43CM9mczXrTqkNN0ddgEpZos0hrTEP62/Iox7z6iWI3CfR06lzbWdK` |
+| `fonts/OpenDyslexic3-Regular.woff` | 86,256 B | `public, max-age=31536000, immutable` | `sha384-MiQPYq3mGCq5UkuGHNOirZlE2VyLQLhd2fAr7kuXOFwK33onvxYW3t7+ENPWlfxd` |
+| `fonts/OpenDyslexic3-Regular.ttf` | 237,868 B | `public, max-age=31536000, immutable` | `sha384-Skm/Vu7sU1pZVyPURhhJMknonTyVgXUzO0qtoZhM2HUMYdJEsHzTQk1I7ocwk++I` |
+
+### Configuration via EmDash Admin Dashboard
+1. Navigate to **EmDash Admin** -> **Plugins** -> **Accessibility Toolkit** (`/_emdash/admin/plugins/accessibility-toolkit/settings`).
+2. Enter your HTTPS asset base URL in **Custom CDN Base URL**, e.g.:
+   `https://cdn.example.com/accessibility-toolkit/v1.3.4`
+3. Click **Save Settings**.
+4. Both `<AccessibilityWidget />` and the generated `/snippet` dynamic loader will automatically load `widget.min.js` and fonts from your CDN with SRI verification and fallback.
+
+### Manual Component Configuration Example
+You can also override the CDN URL directly on the Astro component:
 
 ```astro
 <AccessibilityWidget
-  scriptSrc="https://cdn.example.com/accessibility-toolkit/vendor/coddle-access/js/widget.min.js"
-  fontsUrl="https://cdn.example.com/accessibility-toolkit/vendor/coddle-access/fonts/"
+  cdnSrc="https://cdn.example.com/accessibility-toolkit/v1.3.4/js/widget.min.js"
+  fontsUrl="https://cdn.example.com/accessibility-toolkit/v1.3.4/fonts/"
+  integrity="sha384-PkHCo9yYYt43CM9mczXrTqkNN0ddgEpZos0hrTEP62/Iox7z6iWI3CfR06lzbWdK"
 />
 ```
 
-*(Note: Replace `https://cdn.example.com/...` with your verified asset host domain.)*
-
-### Automatic Fallback Mode (`cdnSrc`)
-You can also provide a remote fallback URL using the `cdnSrc` prop:
-
-```astro
-<AccessibilityWidget
-  cdnSrc="https://cdn.example.com/accessibility-toolkit/vendor/coddle-access/js/widget.min.js"
-/>
-```
-When `cdnSrc` is provided, the component first attempts local loading from `scriptSrc` (defaulting to `/vendor/coddle-access/js/widget.min.js`) and automatically falls back to the specified remote `cdnSrc` URL if the local script fails to load or returns a 404.
+### Automatic Dual-Tier Fallback
+When a CDN URL is configured (`cdnSrc` or `cdnBaseUrl`), the loader attempts to fetch from the remote CDN first. If the CDN request fails (network error, HTTP 404, or ad-blocker), the `script.onerror` handler triggers a seamless failover to the local asset path (`/vendor/coddle-access/js/widget.min.js`). If both fail, a diagnostic warning is logged without crashing the host page.
 
 ---
 
@@ -414,7 +422,7 @@ The plugin uses a clean decoupled architecture between settings persistence, API
     "positionDesktop": "bottom-right",
     "positionMobile": "bottom-right",
     "statementUrl": "/accessibility-statement",
-    "version": "1.3.2",
+    "version": "1.3.3",
     "toolkit": "Accessibility Toolkit",
     "publisher": "EmDash Community"
   }

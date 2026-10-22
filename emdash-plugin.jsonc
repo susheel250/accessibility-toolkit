@@ -146,7 +146,7 @@
 			"file": "docs/description.md"
 		},
 		"changelog": {
-			"file": "CHANGELOG.md"
+			"file": "docs/changelog.md"
 		}
 	}
 }

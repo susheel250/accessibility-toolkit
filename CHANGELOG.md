@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.5] - 2026-10-22
+
+### Fixed
+- Eliminated legacy vendor branding link from the accessibility widget's Shadow DOM footer via scoped style override.
+- Synchronized footer display to collapse cleanly when no visible footer content remains, while preserving accessibility statement links.
+- Neutralized floating launcher button aria-label for accessibility compliance.
+- Applied identical Shadow DOM overrides across both the `<AccessibilityWidget />` companion component and the standalone `/snippet` loader.
+
 ## [1.3.4] - 2026-10-22
 
 ### Added

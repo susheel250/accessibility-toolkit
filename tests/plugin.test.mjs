@@ -54,7 +54,7 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 		const manifest = JSON.parse(jsonClean);
 
 		assert.equal(manifest.slug, "accessibility-toolkit");
-		assert.equal(manifest.version, "1.3.4");
+		assert.equal(manifest.version, "1.3.5");
 		assert.equal(manifest.license, "MIT");
 		assert.equal(manifest.name, "Accessibility Toolkit");
 		assert.ok(manifest.publisher.startsWith("did:plc:"));
@@ -256,7 +256,7 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 		assert.equal(result.positionDesktop, "bottom-right");
 		assert.equal(result.positionMobile, "bottom-right");
 		assert.equal(result.language, "en");
-		assert.equal(result.version, "1.3.4");
+		assert.equal(result.version, "1.3.5");
 		assert.equal(result.toolkit, "Accessibility Toolkit");
 	});
 
@@ -312,9 +312,21 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 		assert.ok(plugin.routes.status);
 		const result = await plugin.routes.status.handler({}, createMockCtx());
 		assert.equal(result.status, "active");
-		assert.equal(result.version, "1.3.4");
+		assert.equal(result.version, "1.3.5");
 		assert.equal(result.brand, "Accessibility Toolkit");
 		assert.equal(result.vendor, "EmDash Community");
+	});
+
+	
+	test("footer branding override is present in companion component and snippet loader", async () => {
+		const widgetSource = fs.readFileSync(new URL("../components/AccessibilityWidget.astro", import.meta.url), "utf-8");
+		assert.ok(widgetSource.includes("applyShadowOverrides"), "Astro component must contain applyShadowOverrides");
+		assert.ok(widgetSource.includes(".cya11y-footer-brand { display: none !important; }"), "Astro component must hide legacy brand link");
+
+		const mockCtx = createMockCtx();
+		const result = await plugin.routes.snippet.handler({}, mockCtx);
+		assert.ok(result.dynamicLoader.includes("applyShadowOverrides"), "Snippet loader must contain applyShadowOverrides");
+		assert.ok(result.dynamicLoader.includes(".cya11y-footer-brand { display: none !important; }"), "Snippet loader must hide legacy brand link");
 	});
 
 	test("settings persistence: fresh install defaults, update retention, partial updates, and enable/disable toggle", async () => {

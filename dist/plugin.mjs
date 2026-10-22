@@ -12,8 +12,52 @@ const e=`sha384-PkHCo9yYYt43CM9mczXrTqkNN0ddgEpZos0hrTEP62/Iox7z6iWI3CfR06lzbWdK
   s.async = true;
   ${a?`s.integrity = '`+e+`'; s.crossOrigin = 'anonymous';`:``}
   ${s?`s.onerror = function() { var fb = document.createElement('script'); fb.id = 'accessibility-toolkit-script-fallback'; fb.src = '`+s+`'; fb.async = true; (document.body || document.head).appendChild(fb); };`:``}
-  (document.body || document.head).appendChild(s);
-})();`,key:`accessibility-toolkit-widget`}]}},routes:{admin:{public:!1,methods:[`POST`],handler:async(e,t)=>{let r=e.input||{},i=await p(t.settings),a=`http://localhost:4321/`;try{let t=e?.url;if(t){let e=new URL(t);e.origin&&(e.protocol===`http:`||e.protocol===`https:`)&&(a=e.origin+`/`)}}catch{}if(r.type===`page_load`)return{blocks:f(i,a)};if(r.type===`form_submit`){let e=r.values||{},o=[],d=String(e.primaryColor||``).trim();d&&!/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(d)&&o.push(`Widget Colour must be a valid hex color (e.g. #1863DC)`);let p=s(d||i.primaryColor),m=String(e.language||``).trim();m&&!n.some(e=>e.value===m)&&o.push(`Unsupported language code "${m}"`);let h=m||i.language,g=String(e.statementUrl||``).trim();g&&!g.startsWith(`/`)&&!g.startsWith(`http://`)&&!g.startsWith(`https://`)&&o.push(`Accessibility statement must be a valid URL or path (e.g. /accessibility-statement)`);let _=String(e.cdnBaseUrl||``).trim();if(_&&!_.startsWith(`https://`)&&o.push(`Custom CDN Base URL must be a valid HTTPS URL (e.g. https://your-cdn.example.com/assets)`),o.length>0)return{blocks:[u.banner({title:`Validation Error`,description:o.join(`; `),variant:`error`}),...f(i,a)],toast:{message:o[0],type:`error`}};let v={enabled:e.enabled===void 0?i.enabled:!!e.enabled,language:h,primaryColor:p,iconId:c(e.iconId??i.iconId),iconSize:Number(e.iconSize??i.iconSize),positionDesktop:l(e.positionDesktop??i.positionDesktop),positionMobile:l(e.positionMobile??i.positionMobile),statementUrl:g,cdnBaseUrl:_};return await t.settings.set(`enabled`,v.enabled),await t.settings.set(`language`,v.language),await t.settings.set(`primaryColor`,v.primaryColor),await t.settings.set(`iconId`,v.iconId),await t.settings.set(`iconSize`,v.iconSize),await t.settings.set(`positionDesktop`,v.positionDesktop),await t.settings.set(`positionMobile`,v.positionMobile),await t.settings.set(`statementUrl`,v.statementUrl),await t.settings.set(`cdnBaseUrl`,v.cdnBaseUrl),t.log.info(`Accessibility settings updated`,{pluginId:t.plugin.id,settings:v}),{blocks:f(v,a),toast:{message:`✓ Settings saved successfully`,type:`success`}}}return{blocks:f(i,a)}}},config:{public:!0,methods:[`GET`],handler:async(t,n)=>({...await p(n.settings),version:`1.3.4`,toolkit:`Accessibility Toolkit`,publisher:`EmDash Community`,sri:e})},snippet:{public:!0,methods:[`GET`],handler:async(t,n)=>{let r=await p(n.settings),i=r.cdnBaseUrl&&r.cdnBaseUrl.startsWith(`https://`)?r.cdnBaseUrl.replace(/\/+$/,``):``,a=!!i,o=a?`${i}/js/widget.min.js`:null;return{enabled:r.enabled,mode:a?`cdn`:`local`,cdnConfigured:a,sri:e,html:`<script src="/vendor/accessibility-toolkit/js/widget.min.js" data-color="${r.primaryColor}" data-position="${r.positionDesktop}" data-lang="${r.language}" async><\/script>`,cdnHtml:a?`<script src="${o}" integrity="${e}" crossorigin="anonymous" data-color="${r.primaryColor}" data-position="${r.positionDesktop}" data-lang="${r.language}" async><\/script>`:null,dynamicLoader:`<script>
+        function applyShadowOverrides() {
+        var container = document.getElementById("cya11y-container");
+        if (!container || !container.shadowRoot) return false;
+        var sr = container.shadowRoot;
+        if (!sr.getElementById("a11y-toolkit-overrides")) {
+          var style = document.createElement("style");
+          style.id = "a11y-toolkit-overrides";
+          style.textContent = [
+            ".cya11y-footer-brand { display: none !important; }",
+            ".cya11y-footer:not(:has(.cya11y-footer-statement-link:not([style*='display: none']):not([style*='display:none']))) { display: none !important; }"
+          ].join("\\n");
+          sr.appendChild(style);
+
+          var btn = sr.querySelector(".cya11y-menu-btn");
+          if (btn && btn.getAttribute("aria-label")) {
+            btn.setAttribute("aria-label", btn.getAttribute("aria-label").replace(/Coddle\\s+/i, ""));
+          }
+
+          var syncFooter = function() {
+            var footer = sr.querySelector(".cya11y-footer");
+            if (!footer) return;
+            var statement = footer.querySelector(".cya11y-footer-statement-link");
+            var hasStatement = statement && window.getComputedStyle(statement).display !== "none";
+            if (!hasStatement) {
+              footer.style.display = "none";
+            }
+          };
+
+          var footerObserver = new MutationObserver(syncFooter);
+          footerObserver.observe(sr, { childList: true, subtree: true });
+        }
+        return true;
+      }
+
+      if (!applyShadowOverrides()) {
+        var obs = new MutationObserver(function() {
+          if (applyShadowOverrides()) {
+            obs.disconnect();
+          }
+        });
+        obs.observe(document.body || document.documentElement, { childList: true, subtree: true });
+        setTimeout(function() { obs.disconnect(); }, 10000);
+      }
+
+      (document.body || document.head).appendChild(s);
+})();`,key:`accessibility-toolkit-widget`}]}},routes:{admin:{public:!1,methods:[`POST`],handler:async(e,t)=>{let r=e.input||{},i=await p(t.settings),a=`http://localhost:4321/`;try{let t=e?.url;if(t){let e=new URL(t);e.origin&&(e.protocol===`http:`||e.protocol===`https:`)&&(a=e.origin+`/`)}}catch{}if(r.type===`page_load`)return{blocks:f(i,a)};if(r.type===`form_submit`){let e=r.values||{},o=[],d=String(e.primaryColor||``).trim();d&&!/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(d)&&o.push(`Widget Colour must be a valid hex color (e.g. #1863DC)`);let p=s(d||i.primaryColor),m=String(e.language||``).trim();m&&!n.some(e=>e.value===m)&&o.push(`Unsupported language code "${m}"`);let h=m||i.language,g=String(e.statementUrl||``).trim();g&&!g.startsWith(`/`)&&!g.startsWith(`http://`)&&!g.startsWith(`https://`)&&o.push(`Accessibility statement must be a valid URL or path (e.g. /accessibility-statement)`);let _=String(e.cdnBaseUrl||``).trim();if(_&&!_.startsWith(`https://`)&&o.push(`Custom CDN Base URL must be a valid HTTPS URL (e.g. https://your-cdn.example.com/assets)`),o.length>0)return{blocks:[u.banner({title:`Validation Error`,description:o.join(`; `),variant:`error`}),...f(i,a)],toast:{message:o[0],type:`error`}};let v={enabled:e.enabled===void 0?i.enabled:!!e.enabled,language:h,primaryColor:p,iconId:c(e.iconId??i.iconId),iconSize:Number(e.iconSize??i.iconSize),positionDesktop:l(e.positionDesktop??i.positionDesktop),positionMobile:l(e.positionMobile??i.positionMobile),statementUrl:g,cdnBaseUrl:_};return await t.settings.set(`enabled`,v.enabled),await t.settings.set(`language`,v.language),await t.settings.set(`primaryColor`,v.primaryColor),await t.settings.set(`iconId`,v.iconId),await t.settings.set(`iconSize`,v.iconSize),await t.settings.set(`positionDesktop`,v.positionDesktop),await t.settings.set(`positionMobile`,v.positionMobile),await t.settings.set(`statementUrl`,v.statementUrl),await t.settings.set(`cdnBaseUrl`,v.cdnBaseUrl),t.log.info(`Accessibility settings updated`,{pluginId:t.plugin.id,settings:v}),{blocks:f(v,a),toast:{message:`✓ Settings saved successfully`,type:`success`}}}return{blocks:f(i,a)}}},config:{public:!0,methods:[`GET`],handler:async(t,n)=>({...await p(n.settings),version:`1.3.5`,toolkit:`Accessibility Toolkit`,publisher:`EmDash Community`,sri:e})},snippet:{public:!0,methods:[`GET`],handler:async(t,n)=>{let r=await p(n.settings),i=r.cdnBaseUrl&&r.cdnBaseUrl.startsWith(`https://`)?r.cdnBaseUrl.replace(/\/+$/,``):``,a=!!i,o=a?`${i}/js/widget.min.js`:null;return{enabled:r.enabled,mode:a?`cdn`:`local`,cdnConfigured:a,sri:e,html:`<script src="/vendor/accessibility-toolkit/js/widget.min.js" data-color="${r.primaryColor}" data-position="${r.positionDesktop}" data-lang="${r.language}" async><\/script>`,cdnHtml:a?`<script src="${o}" integrity="${e}" crossorigin="anonymous" data-color="${r.primaryColor}" data-position="${r.positionDesktop}" data-lang="${r.language}" async><\/script>`:null,dynamicLoader:`<script>
 (function() {
   if (window.__accessibility_toolkit_initialized) return;
   window.__accessibility_toolkit_initialized = true;
@@ -59,10 +103,55 @@ const e=`sha384-PkHCo9yYYt43CM9mczXrTqkNN0ddgEpZos0hrTEP62/Iox7z6iWI3CfR06lzbWdK
           console.warn('[Accessibility Toolkit] Widget script failed to load from ' + primarySrc + '. Ensure vendor assets exist in public/vendor/accessibility-toolkit/ (or legacy public/vendor/coddle-access/) or configure a valid CDN URL.');
         }
       };
+
+      function applyShadowOverrides() {
+        var container = document.getElementById("cya11y-container");
+        if (!container || !container.shadowRoot) return false;
+        var sr = container.shadowRoot;
+        if (!sr.getElementById("a11y-toolkit-overrides")) {
+          var style = document.createElement("style");
+          style.id = "a11y-toolkit-overrides";
+          style.textContent = [
+            ".cya11y-footer-brand { display: none !important; }",
+            ".cya11y-footer:not(:has(.cya11y-footer-statement-link:not([style*='display: none']):not([style*='display:none']))) { display: none !important; }"
+          ].join("\\n");
+          sr.appendChild(style);
+
+          var btn = sr.querySelector(".cya11y-menu-btn");
+          if (btn && btn.getAttribute("aria-label")) {
+            btn.setAttribute("aria-label", btn.getAttribute("aria-label").replace(/Coddle\\s+/i, ""));
+          }
+
+          var syncFooter = function() {
+            var footer = sr.querySelector(".cya11y-footer");
+            if (!footer) return;
+            var statement = footer.querySelector(".cya11y-footer-statement-link");
+            var hasStatement = statement && window.getComputedStyle(statement).display !== "none";
+            if (!hasStatement) {
+              footer.style.display = "none";
+            }
+          };
+
+          var footerObserver = new MutationObserver(syncFooter);
+          footerObserver.observe(sr, { childList: true, subtree: true });
+        }
+        return true;
+      }
+
+      if (!applyShadowOverrides()) {
+        var obs = new MutationObserver(function() {
+          if (applyShadowOverrides()) {
+            obs.disconnect();
+          }
+        });
+        obs.observe(document.body || document.documentElement, { childList: true, subtree: true });
+        setTimeout(function() { obs.disconnect(); }, 10000);
+      }
+
       (document.body || document.head).appendChild(s);
     })
     .catch(function(err) {
       console.warn('[Accessibility Toolkit] Failed to load configuration:', err);
     });
 })();
-<\/script>`,companion:`In Astro layouts, you can also render the native companion <AccessibilityWidget />.`}}},status:{public:!0,methods:[`GET`],handler:async(e,t)=>({status:`active`,pluginId:t.plugin.id,version:`1.3.4`,brand:`Accessibility Toolkit`,vendor:`EmDash Community`,website:`https://emdashcms.com`})}}};export{t as DEFAULT_SETTINGS,r as ICONS,a as POSITIONS,o as PRESET_COLORS,i as SIZES,n as SUPPORTED_LANGUAGES,e as WIDGET_SRI_HASH,u as blocks,m as default,d as elements,c as normalizeIconId,l as normalizePosition,f as renderAdminBlocks,s as toValid7CharHex};
+<\/script>`,companion:`In Astro layouts, you can also render the native companion <AccessibilityWidget />.`}}},status:{public:!0,methods:[`GET`],handler:async(e,t)=>({status:`active`,pluginId:t.plugin.id,version:`1.3.5`,brand:`Accessibility Toolkit`,vendor:`EmDash Community`,website:`https://emdashcms.com`})}}};export{t as DEFAULT_SETTINGS,r as ICONS,a as POSITIONS,o as PRESET_COLORS,i as SIZES,n as SUPPORTED_LANGUAGES,e as WIDGET_SRI_HASH,u as blocks,m as default,d as elements,c as normalizeIconId,l as normalizePosition,f as renderAdminBlocks,s as toValid7CharHex};

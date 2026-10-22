@@ -7,7 +7,7 @@
 /** @type {import("emdash").PluginDescriptor} */
 const descriptor = Object.freeze({
 	"id": "accessibility-toolkit",
-	"version": "1.3.4",
+	"version": "1.3.5",
 	"format": "standard",
 	"entrypoint": "accessibility-toolkit/sandbox",
 	"capabilities": [],

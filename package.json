@@ -1,6 +1,6 @@
 {
 	"name": "accessibility-toolkit",
-	"version": "1.3.4",
+	"version": "1.3.5",
 	"description": "Accessibility Toolkit - Accessible, lightweight, customizable web accessibility widget for EmDash CMS",
 	"private": true,
 	"type": "module",

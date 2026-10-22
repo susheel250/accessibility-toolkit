@@ -420,7 +420,51 @@ const plugin: SandboxedPlugin = {
   s.async = true;
   ${cdnBase ? "s.integrity = '" + WIDGET_SRI_HASH + "'; s.crossOrigin = 'anonymous';" : ""}
   ${fallbackSrc ? "s.onerror = function() { var fb = document.createElement('script'); fb.id = 'accessibility-toolkit-script-fallback'; fb.src = '" + fallbackSrc + "'; fb.async = true; (document.body || document.head).appendChild(fb); };" : ""}
-  (document.body || document.head).appendChild(s);
+        function applyShadowOverrides() {
+        var container = document.getElementById("cya11y-container");
+        if (!container || !container.shadowRoot) return false;
+        var sr = container.shadowRoot;
+        if (!sr.getElementById("a11y-toolkit-overrides")) {
+          var style = document.createElement("style");
+          style.id = "a11y-toolkit-overrides";
+          style.textContent = [
+            ".cya11y-footer-brand { display: none !important; }",
+            ".cya11y-footer:not(:has(.cya11y-footer-statement-link:not([style*='display: none']):not([style*='display:none']))) { display: none !important; }"
+          ].join("\\n");
+          sr.appendChild(style);
+
+          var btn = sr.querySelector(".cya11y-menu-btn");
+          if (btn && btn.getAttribute("aria-label")) {
+            btn.setAttribute("aria-label", btn.getAttribute("aria-label").replace(/Coddle\\s+/i, ""));
+          }
+
+          var syncFooter = function() {
+            var footer = sr.querySelector(".cya11y-footer");
+            if (!footer) return;
+            var statement = footer.querySelector(".cya11y-footer-statement-link");
+            var hasStatement = statement && window.getComputedStyle(statement).display !== "none";
+            if (!hasStatement) {
+              footer.style.display = "none";
+            }
+          };
+
+          var footerObserver = new MutationObserver(syncFooter);
+          footerObserver.observe(sr, { childList: true, subtree: true });
+        }
+        return true;
+      }
+
+      if (!applyShadowOverrides()) {
+        var obs = new MutationObserver(function() {
+          if (applyShadowOverrides()) {
+            obs.disconnect();
+          }
+        });
+        obs.observe(document.body || document.documentElement, { childList: true, subtree: true });
+        setTimeout(function() { obs.disconnect(); }, 10000);
+      }
+
+      (document.body || document.head).appendChild(s);
 })();`;
 
 			return [
@@ -561,7 +605,7 @@ const plugin: SandboxedPlugin = {
 
 				return {
 					...settings,
-					version: "1.3.4",
+					version: "1.3.5",
 					toolkit: "Accessibility Toolkit",
 					publisher: "EmDash Community",
 					sri: WIDGET_SRI_HASH,
@@ -632,6 +676,51 @@ const plugin: SandboxedPlugin = {
           console.warn('[Accessibility Toolkit] Widget script failed to load from ' + primarySrc + '. Ensure vendor assets exist in public/vendor/accessibility-toolkit/ (or legacy public/vendor/coddle-access/) or configure a valid CDN URL.');
         }
       };
+
+      function applyShadowOverrides() {
+        var container = document.getElementById("cya11y-container");
+        if (!container || !container.shadowRoot) return false;
+        var sr = container.shadowRoot;
+        if (!sr.getElementById("a11y-toolkit-overrides")) {
+          var style = document.createElement("style");
+          style.id = "a11y-toolkit-overrides";
+          style.textContent = [
+            ".cya11y-footer-brand { display: none !important; }",
+            ".cya11y-footer:not(:has(.cya11y-footer-statement-link:not([style*='display: none']):not([style*='display:none']))) { display: none !important; }"
+          ].join("\\n");
+          sr.appendChild(style);
+
+          var btn = sr.querySelector(".cya11y-menu-btn");
+          if (btn && btn.getAttribute("aria-label")) {
+            btn.setAttribute("aria-label", btn.getAttribute("aria-label").replace(/Coddle\\s+/i, ""));
+          }
+
+          var syncFooter = function() {
+            var footer = sr.querySelector(".cya11y-footer");
+            if (!footer) return;
+            var statement = footer.querySelector(".cya11y-footer-statement-link");
+            var hasStatement = statement && window.getComputedStyle(statement).display !== "none";
+            if (!hasStatement) {
+              footer.style.display = "none";
+            }
+          };
+
+          var footerObserver = new MutationObserver(syncFooter);
+          footerObserver.observe(sr, { childList: true, subtree: true });
+        }
+        return true;
+      }
+
+      if (!applyShadowOverrides()) {
+        var obs = new MutationObserver(function() {
+          if (applyShadowOverrides()) {
+            obs.disconnect();
+          }
+        });
+        obs.observe(document.body || document.documentElement, { childList: true, subtree: true });
+        setTimeout(function() { obs.disconnect(); }, 10000);
+      }
+
       (document.body || document.head).appendChild(s);
     })
     .catch(function(err) {
@@ -650,7 +739,7 @@ const plugin: SandboxedPlugin = {
 				return {
 					status: "active",
 					pluginId: ctx.plugin.id,
-					version: "1.3.4",
+					version: "1.3.5",
 					brand: "Accessibility Toolkit",
 					vendor: "EmDash Community",
 					website: "https://emdashcms.com",

@@ -351,11 +351,17 @@ Add the returned dynamic loader script before the closing `</body>` tag:
 ### Remote CDN Hosting Architecture
 If you prefer to host static assets on a remote Content Delivery Network (CDN) or external storage bucket (such as Cloudflare R2, AWS CloudFront/S3, or a dedicated asset domain) rather than copying them locally to `public/vendor/`, configure the **Custom CDN Base URL** (`cdnBaseUrl`) setting in the EmDash admin dashboard or via component props.
 
-> [!WARNING]
-> **CDN Availability & Deployment Notice:**  
-> Public npm-mirrored CDN endpoints (such as `cdn.jsdelivr.net/npm/accessibility-toolkit@1.3.4/...`) are unlisted because `accessibility-toolkit` is distributed through the ATProto-based EmDash Plugin Registry rather than public npm.  
+> [!NOTE]
+> **Verified Production CDN Delivery:**  
+> The Accessibility Toolkit static assets are publicly hosted on jsdelivr Global CDN backed by the immutable Git release tag `v1.3.4`:
 > 
-> To use CDN delivery, teams must upload the vendor assets (`vendor/coddle-access/`) to their own verified CDN or object storage service, configure CORS (`Access-Control-Allow-Origin: *`), and set the `cdnBaseUrl` setting in EmDash.
+> - **Production CDN Base URL:** `https://cdn.jsdelivr.net/gh/susheel250/coddle-accessibility@v1.3.4/vendor/coddle-access`
+> - **Production Script URL:** `https://cdn.jsdelivr.net/gh/susheel250/coddle-accessibility@v1.3.4/vendor/coddle-access/js/widget.min.js`
+> - **Subresource Integrity:** `integrity="sha384-PkHCo9yYYt43CM9mczXrTqkNN0ddgEpZos0hrTEP62/Iox7z6iWI3CfR06lzbWdK"`
+> - **Fonts Directory:** `https://cdn.jsdelivr.net/gh/susheel250/coddle-accessibility@v1.3.4/vendor/coddle-access/fonts/`
+> - **HTTP Headers:** CORS enabled (`Access-Control-Allow-Origin: *`), immutable caching (`Cache-Control: public, max-age=31536000, immutable`).
+> 
+> When using this CDN base URL, **no manual asset copying into `public/vendor/` is required** in fresh EmDash projects. Alternatively, organizations may host these assets on their own private Cloudflare R2, AWS S3/CloudFront, or custom domain using the specifications below.
 
 ### Subresource Integrity (SRI) & Caching Specifications
 For production CDN deployments, serve immutable, version-pinned assets with the following verified cryptographic hashes and HTTP response headers:

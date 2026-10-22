@@ -76,6 +76,28 @@ The sandboxed plugin exposes three unauthenticated endpoints:
 
 ---
 
+
+
+---
+
+## Production CDN Hosting
+
+The Accessibility Toolkit supports zero-copy frontend asset distribution via a production HTTPS CDN:
+
+- **CDN Provider:** jsdelivr Global CDN (backed by immutable version tag `v1.3.4`)
+- **Verified Base URL:** `https://cdn.jsdelivr.net/gh/susheel250/coddle-accessibility@v1.3.4/vendor/coddle-access`
+- **Production Script:** `https://cdn.jsdelivr.net/gh/susheel250/coddle-accessibility@v1.3.4/vendor/coddle-access/js/widget.min.js`
+  - **MIME Type:** `application/javascript; charset=utf-8`
+  - **Subresource Integrity (SRI):** `integrity="sha384-PkHCo9yYYt43CM9mczXrTqkNN0ddgEpZos0hrTEP62/Iox7z6iWI3CfR06lzbWdK"`
+  - **CORS:** `access-control-allow-origin: *`
+  - **Cache Header:** `cache-control: public, max-age=31536000, s-maxage=31536000, immutable`
+- **Production Fonts:**
+  - WOFF: `https://cdn.jsdelivr.net/gh/susheel250/coddle-accessibility@v1.3.4/vendor/coddle-access/fonts/OpenDyslexic3-Regular.woff`
+  - TTF: `https://cdn.jsdelivr.net/gh/susheel250/coddle-accessibility@v1.3.4/vendor/coddle-access/fonts/OpenDyslexic3-Regular.ttf`
+
+### Zero-Copy Installation Flow
+When `cdnBaseUrl` is configured in the plugin settings (or passed via `<AccessibilityWidget cdnSrc="..." />`), fresh EmDash projects do **not** need to manually copy assets into `public/vendor/`. The widget script and fonts are loaded dynamically from the CDN, while preserving an automatic fallback to local vendor assets in case of network unavailability.
+
 ## Installation & Theme Setup
 
 ### Option 1: Theme Script Embed (Any EmDash Theme)

@@ -13,6 +13,7 @@ interface AccessibilityToolkitSettings {
   statementUrl: string;
   cdnBaseUrl?: string;
 }
+/** @deprecated Use AccessibilityToolkitSettings instead. Retained for backwards compatibility. */
 type CoddleAccessSettings = AccessibilityToolkitSettings;
 declare const DEFAULT_SETTINGS: AccessibilityToolkitSettings;
 declare const SUPPORTED_LANGUAGES: {

@@ -182,7 +182,7 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 				positionDesktop: "bottom-left",
 				positionMobile: "top-left",
 				statementUrl: "https://example.com/accessibility",
-				cdnBaseUrl: "https://cdn.jsdelivr.net/gh/susheel250/coddle-accessibility@v1.3.4/vendor/coddle-access",
+				cdnBaseUrl: "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.4/vendor/accessibility-toolkit",
 			},
 		};
 
@@ -203,7 +203,7 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 		assert.equal(await mockCtx.settings.get("positionDesktop"), "bottom-left");
 		assert.equal(await mockCtx.settings.get("positionMobile"), "top-left");
 		assert.equal(await mockCtx.settings.get("statementUrl"), "https://example.com/accessibility");
-		assert.equal(await mockCtx.settings.get("cdnBaseUrl"), "https://cdn.jsdelivr.net/gh/susheel250/coddle-accessibility@v1.3.4/vendor/coddle-access");
+		assert.equal(await mockCtx.settings.get("cdnBaseUrl"), "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.4/vendor/accessibility-toolkit");
 
 		// Now verify config route returns updated settings
 		const config = await plugin.routes.config.handler({}, mockCtx);
@@ -213,7 +213,7 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 		assert.equal(config.iconId, "wheel");
 		assert.equal(config.iconSize, 56);
 		assert.equal(config.positionDesktop, "bottom-left");
-		assert.equal(config.cdnBaseUrl, "https://cdn.jsdelivr.net/gh/susheel250/coddle-accessibility@v1.3.4/vendor/coddle-access");
+		assert.equal(config.cdnBaseUrl, "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.4/vendor/accessibility-toolkit");
 	});
 
 	test("admin route rejects invalid settings safely without breaking state", async () => {
@@ -458,7 +458,9 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 			: path.resolve(".");
 		const iconPath = path.resolve(rootDir, "icon.png");
 		const screenshotPath = path.resolve(rootDir, "screenshots/accessibility-menu.jpg");
-		const widgetJsPath = path.resolve(rootDir, "vendor/coddle-access/js/widget.min.js");
+		const widgetJsPath = path.resolve(rootDir, "vendor/accessibility-toolkit/js/widget.min.js");
+		const legacyWidgetJsPath = path.resolve(rootDir, "vendor/coddle-access/js/widget.min.js");
+		assert.ok(fs.existsSync(legacyWidgetJsPath), "Legacy vendor/coddle-access asset must exist for backward compatibility");
 		const fontWoffPath = path.resolve(rootDir, "vendor/coddle-access/fonts/OpenDyslexic3-Regular.woff");
 		const fontTtfPath = path.resolve(rootDir, "vendor/coddle-access/fonts/OpenDyslexic3-Regular.ttf");
 

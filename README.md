@@ -45,7 +45,7 @@ In EmDash, the `page:fragments` hook (which injects raw HTML fragments into visi
 Therefore, sandboxed registry plugins provide:
 1. **Administrative Configuration**: Managed directly in EmDash Settings through `admin.pages` (/settings) and `admin.settingsSchema`.
 2. **Configuration API**: Accessible by client scripts via `/_emdash/api/plugins/$id/config`.
-3. **Embed Options**: Either add the generated embed snippet to your theme layout, or use the optional native companion `<AccessibilityWidget />` (or `<CoddleAccessWidget />`) in Astro themes.
+3. **Embed Options**: Either add the generated embed snippet to your theme layout, or use the optional native companion `<AccessibilityWidget />` (or legacy `<CoddleAccessWidget />`) in Astro themes.
 
 ---
 
@@ -85,15 +85,15 @@ The sandboxed plugin exposes three unauthenticated endpoints:
 The Accessibility Toolkit supports zero-copy frontend asset distribution via a production HTTPS CDN:
 
 - **CDN Provider:** jsdelivr Global CDN (backed by immutable version tag `v1.3.4`)
-- **Verified Base URL:** `https://cdn.jsdelivr.net/gh/susheel250/coddle-accessibility@v1.3.4/vendor/coddle-access`
-- **Production Script:** `https://cdn.jsdelivr.net/gh/susheel250/coddle-accessibility@v1.3.4/vendor/coddle-access/js/widget.min.js`
+- **Verified Base URL:** `https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.4/vendor/accessibility-toolkit`
+- **Production Script:** `https://cdn.jsdelivr.net/gh/susheel250/coddle-accessibility@v1.3.4/vendor/accessibility-toolkit/js/widget.min.js`
   - **MIME Type:** `application/javascript; charset=utf-8`
   - **Subresource Integrity (SRI):** `integrity="sha384-PkHCo9yYYt43CM9mczXrTqkNN0ddgEpZos0hrTEP62/Iox7z6iWI3CfR06lzbWdK"`
   - **CORS:** `access-control-allow-origin: *`
   - **Cache Header:** `cache-control: public, max-age=31536000, s-maxage=31536000, immutable`
 - **Production Fonts:**
-  - WOFF: `https://cdn.jsdelivr.net/gh/susheel250/coddle-accessibility@v1.3.4/vendor/coddle-access/fonts/OpenDyslexic3-Regular.woff`
-  - TTF: `https://cdn.jsdelivr.net/gh/susheel250/coddle-accessibility@v1.3.4/vendor/coddle-access/fonts/OpenDyslexic3-Regular.ttf`
+  - WOFF: `https://cdn.jsdelivr.net/gh/susheel250/coddle-accessibility@v1.3.4/vendor/accessibility-toolkit/fonts/OpenDyslexic3-Regular.woff`
+  - TTF: `https://cdn.jsdelivr.net/gh/susheel250/coddle-accessibility@v1.3.4/vendor/accessibility-toolkit/fonts/OpenDyslexic3-Regular.ttf`
 
 ### Zero-Copy Installation Flow
 When `cdnBaseUrl` is configured in the plugin settings (or passed via `<AccessibilityWidget cdnSrc="..." />`), fresh EmDash projects do **not** need to manually copy assets into `public/vendor/`. The widget script and fonts are loaded dynamically from the CDN, while preserving an automatic fallback to local vendor assets in case of network unavailability.
@@ -106,7 +106,7 @@ When `cdnBaseUrl` is configured in the plugin settings (or passed via `<Accessib
 Add the local vendor script to your site layout before the closing `</body>` tag:
 
 ```html
-<script src="/vendor/coddle-access/js/widget.min.js" async></script>
+<script src="/vendor/accessibility-toolkit/js/widget.min.js" async></script>
 ```
 
 Or use dynamic configuration loaded from the plugin API:
@@ -126,10 +126,10 @@ Or use dynamic configuration loaded from the plugin API:
         language: { default: cfg.language }
       };
       window._cyA11yAssets = {
-        fonts: '/vendor/coddle-access/fonts/'
+        fonts: '/vendor/accessibility-toolkit/fonts/'
       };
       const s = document.createElement('script');
-      s.src = '/vendor/coddle-access/js/widget.min.js';
+      s.src = '/vendor/accessibility-toolkit/js/widget.min.js';
       s.async = true;
       document.body.appendChild(s);
     });

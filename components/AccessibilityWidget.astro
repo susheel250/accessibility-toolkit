@@ -31,9 +31,9 @@ const {
   positionDesktop = "bottom-right",
   positionMobile = "bottom-right",
   statementUrl = "",
-  scriptSrc = "/vendor/coddle-access/js/widget.min.js",
+  scriptSrc = "/vendor/accessibility-toolkit/js/widget.min.js",
   cdnSrc = "",
-  fontsUrl = "/vendor/coddle-access/fonts/",
+  fontsUrl = "/vendor/accessibility-toolkit/fonts/",
   integrity = "sha384-PkHCo9yYYt43CM9mczXrTqkNN0ddgEpZos0hrTEP62/Iox7z6iWI3CfR06lzbWdK",
   companyName = "",
   website = "",
@@ -126,7 +126,7 @@ const config = {
 
         // Resolve fonts URL: custom fontsUrl > activeConfig.cdnBaseUrl > default
         var activeFontsUrl = fontsUrl;
-        if (activeConfig && activeConfig.cdnBaseUrl && activeConfig.cdnBaseUrl.startsWith("https://") && fontsUrl === "/vendor/coddle-access/fonts/") {
+        if (activeConfig && activeConfig.cdnBaseUrl && activeConfig.cdnBaseUrl.startsWith("https://") && (fontsUrl === "/vendor/accessibility-toolkit/fonts/" || fontsUrl === "/vendor/coddle-access/fonts/")) {
           activeFontsUrl = activeConfig.cdnBaseUrl.replace(/\/+$/, "") + "/fonts/";
         }
         window._cyA11yAssets = {
@@ -172,11 +172,11 @@ const config = {
             fallback.src = fallbackSrc;
             fallback.async = true;
             fallback.onerror = function() {
-              console.warn("[Accessibility Toolkit] Both primary (" + primarySrc + ") and fallback (" + fallbackSrc + ") failed to load. Ensure assets exist in public/vendor/coddle-access/ or check CDN availability.");
+              console.warn("[Accessibility Toolkit] Both primary (" + primarySrc + ") and fallback (" + fallbackSrc + ") failed to load. Ensure assets exist in public/vendor/accessibility-toolkit/ (or legacy public/vendor/coddle-access/) or check CDN availability.");
             };
             (document.body || document.head).appendChild(fallback);
           } else {
-            console.warn("[Accessibility Toolkit] Widget script failed to load from " + primarySrc + ". To use local assets, ensure files exist in public/vendor/coddle-access/ or configure a valid CDN URL.");
+            console.warn("[Accessibility Toolkit] Widget script failed to load from " + primarySrc + ". To use local assets, ensure files exist in public/vendor/accessibility-toolkit/ (or legacy public/vendor/coddle-access/) or configure a valid CDN URL.");
           }
         };
 

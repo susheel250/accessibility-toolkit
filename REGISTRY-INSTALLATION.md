@@ -85,14 +85,14 @@ The frontend widget relies on production client-side bundles and font assets inc
 
 | Asset File Path | Approximate Size | Role & Purpose |
 |---|---|---|
-| `vendor/coddle-access/js/widget.min.js` | ~365 kB | Production compiled accessibility engine and Shadow DOM toolbar interface. |
-| `vendor/coddle-access/js/widget.js` | ~1.1 MB | Unminified source bundle for local debugging and inspection. |
-| `vendor/coddle-access/fonts/OpenDyslexic3-Regular.woff` | ~86 kB | Web Open Font Format (WOFF) typeface for dyslexia reading mode. |
-| `vendor/coddle-access/fonts/OpenDyslexic3-Regular.ttf` | ~238 kB | TrueType font fallback for older browser environments. |
+| `vendor/accessibility-toolkit/js/widget.min.js` | ~365 kB | Production compiled accessibility engine and Shadow DOM toolbar interface. |
+| `vendor/accessibility-toolkit/js/widget.js` | ~1.1 MB | Unminified source bundle for local debugging and inspection. |
+| `vendor/accessibility-toolkit/fonts/OpenDyslexic3-Regular.woff` | ~86 kB | Web Open Font Format (WOFF) typeface for dyslexia reading mode. |
+| `vendor/accessibility-toolkit/fonts/OpenDyslexic3-Regular.ttf` | ~238 kB | TrueType font fallback for older browser environments. |
 
 > [!NOTE]
 > **Preserved Legacy Directory Path:**  
-> The directory name `vendor/coddle-access/` is a legacy asset directory path preserved to ensure backwards compatibility with the underlying widget engine and existing deployments. Host websites must copy and maintain this directory structure under `public/vendor/coddle-access/`.
+> The directory name `vendor/accessibility-toolkit/` is a legacy asset directory path preserved to ensure backwards compatibility with the underlying widget engine and existing deployments. Host websites must copy and maintain this directory structure under `public/vendor/accessibility-toolkit/`.
 
 ### Package Exports Mapping
 The package exports defined in [package.json](package.json) provide multiple entrypoints for different integration contexts:
@@ -171,7 +171,7 @@ export default defineConfig({
 ### Why Static Assets Must Be Copied to the Host
 Astro web servers only serve static assets from the host application's `public/` folder. Files installed inside `node_modules/accessibility-toolkit/vendor/` are not accessible over HTTP.
 
-If a browser requests `/vendor/coddle-access/js/widget.min.js` and the file is not in your host's `public/` directory, the server responds with **404 Not Found**.
+If a browser requests `/vendor/accessibility-toolkit/js/widget.min.js` and the file is not in your host's `public/` directory, the server responds with **404 Not Found**.
 
 ### Step 5.1: Copy Vendor Assets
 From your website root directory (`/path/to/your-emdash-site`), ensure the destination vendor directory exists and copy the bundled vendor assets into `public/vendor/`:
@@ -181,7 +181,7 @@ From your website root directory (`/path/to/your-emdash-site`), ensure the desti
 mkdir -p public/vendor
 
 # Copy the vendor assets directory (widget bundle and fonts) into public/vendor/
-cp -R node_modules/accessibility-toolkit/vendor/coddle-access public/vendor/
+cp -R node_modules/accessibility-toolkit/vendor/accessibility-toolkit public/vendor/
 ```
 
 ### Step 5.2: Verify Destination Structure
@@ -299,9 +299,9 @@ By default, `<AccessibilityWidget />` fetches active configuration from the EmDa
 | `positionDesktop` | `"bottom-right" | "bottom-left" | "top-right" | "top-left"` | `"bottom-right"` | Force desktop placement corner. |
 | `positionMobile` | `"bottom-right" | "bottom-left" | "top-right" | "top-left"` | `"bottom-right"` | Force mobile placement corner. |
 | `statementUrl` | `string` | `""` | Force custom accessibility statement URL. |
-| `scriptSrc` | `string` | `"/vendor/coddle-access/js/widget.min.js"` | URL from which the browser loads the widget script. |
+| `scriptSrc` | `string` | `"/vendor/accessibility-toolkit/js/widget.min.js"` | URL from which the browser loads the widget script. |
 | `cdnSrc` | `string` | `""` | Remote fallback URL if local `scriptSrc` fails or 404s. |
-| `fontsUrl` | `string` | `"/vendor/coddle-access/fonts/"` | Directory containing OpenDyslexic web fonts. |
+| `fontsUrl` | `string` | `"/vendor/accessibility-toolkit/fonts/"` | Directory containing OpenDyslexic web fonts. |
 | `companyName` | `string` | `""` | Optional organization name for the accessibility statement module. |
 | `website` | `string` | `""` | Optional website URL for the accessibility statement module. |
 
@@ -333,10 +333,10 @@ Add the returned dynamic loader script before the closing `</body>` tag:
         statementUrl: cfg.statementUrl || '',
         language: { default: cfg.language || 'en' }
       };
-      window._cyA11yAssets = { fonts: '/vendor/coddle-access/fonts/' };
+      window._cyA11yAssets = { fonts: '/vendor/accessibility-toolkit/fonts/' };
       var s = document.createElement('script');
       s.id = 'accessibility-toolkit-script';
-      s.src = '/vendor/coddle-access/js/widget.min.js';
+      s.src = '/vendor/accessibility-toolkit/js/widget.min.js';
       s.async = true;
       (document.body || document.head).appendChild(s);
     });
@@ -355,10 +355,10 @@ If you prefer to host static assets on a remote Content Delivery Network (CDN) o
 > **Verified Production CDN Delivery:**  
 > The Accessibility Toolkit static assets are publicly hosted on jsdelivr Global CDN backed by the immutable Git release tag `v1.3.4`:
 > 
-> - **Production CDN Base URL:** `https://cdn.jsdelivr.net/gh/susheel250/coddle-accessibility@v1.3.4/vendor/coddle-access`
-> - **Production Script URL:** `https://cdn.jsdelivr.net/gh/susheel250/coddle-accessibility@v1.3.4/vendor/coddle-access/js/widget.min.js`
+> - **Production CDN Base URL:** `https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.4/vendor/accessibility-toolkit`
+> - **Production Script URL:** `https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.4/vendor/accessibility-toolkit/js/widget.min.js`
 > - **Subresource Integrity:** `integrity="sha384-PkHCo9yYYt43CM9mczXrTqkNN0ddgEpZos0hrTEP62/Iox7z6iWI3CfR06lzbWdK"`
-> - **Fonts Directory:** `https://cdn.jsdelivr.net/gh/susheel250/coddle-accessibility@v1.3.4/vendor/coddle-access/fonts/`
+> - **Fonts Directory:** `https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.4/vendor/accessibility-toolkit/fonts/`
 > - **HTTP Headers:** CORS enabled (`Access-Control-Allow-Origin: *`), immutable caching (`Cache-Control: public, max-age=31536000, immutable`).
 > 
 > When using this CDN base URL, **no manual asset copying into `public/vendor/` is required** in fresh EmDash projects. Alternatively, organizations may host these assets on their own private Cloudflare R2, AWS S3/CloudFront, or custom domain using the specifications below.
@@ -391,7 +391,7 @@ You can also override the CDN URL directly on the Astro component:
 ```
 
 ### Automatic Dual-Tier Fallback
-When a CDN URL is configured (`cdnSrc` or `cdnBaseUrl`), the loader attempts to fetch from the remote CDN first. If the CDN request fails (network error, HTTP 404, or ad-blocker), the `script.onerror` handler triggers a seamless failover to the local asset path (`/vendor/coddle-access/js/widget.min.js`). If both fail, a diagnostic warning is logged without crashing the host page.
+When a CDN URL is configured (`cdnSrc` or `cdnBaseUrl`), the loader attempts to fetch from the remote CDN first. If the CDN request fails (network error, HTTP 404, or ad-blocker), the `script.onerror` handler triggers a seamless failover to the local asset path (`/vendor/accessibility-toolkit/js/widget.min.js`). If both fail, a diagnostic warning is logged without crashing the host page.
 
 ---
 
@@ -449,10 +449,10 @@ Verify that your server delivers HTML, scripts, fonts, and API responses:
 curl -sI http://localhost:4321/ | grep -E "HTTP/|content-type:"
 
 # 2. Verify widget JavaScript is served without 404 (HTTP 200, ~365 kB)
-curl -sI http://localhost:4321/vendor/coddle-access/js/widget.min.js | grep -E "HTTP/|content-length:"
+curl -sI http://localhost:4321/vendor/accessibility-toolkit/js/widget.min.js | grep -E "HTTP/|content-length:"
 
 # 3. Verify OpenDyslexic font is served without 404 (HTTP 200, ~86 kB)
-curl -sI http://localhost:4321/vendor/coddle-access/fonts/OpenDyslexic3-Regular.woff | grep -E "HTTP/|content-length:"
+curl -sI http://localhost:4321/vendor/accessibility-toolkit/fonts/OpenDyslexic3-Regular.woff | grep -E "HTTP/|content-length:"
 
 # 4. Verify settings API endpoint returns JSON
 curl -s http://localhost:4321/_emdash/api/plugins/accessibility-toolkit/config
@@ -486,20 +486,20 @@ curl -s http://localhost:4321/_emdash/api/plugins/accessibility-toolkit/config
 - **Check Layout Inclusion:** Confirm that `<AccessibilityWidget />` is imported and included inside the active layout file for that route.
 - **Check DevTools Console:** Open browser console (F12) and inspect for network errors or unhandled script exceptions.
 
-### Problem 2: Browser console shows `GET /vendor/coddle-access/js/widget.min.js 404 (Not Found)`
+### Problem 2: Browser console shows `GET /vendor/accessibility-toolkit/js/widget.min.js 404 (Not Found)`
 - **Cause:** Vendor assets have not been copied into your host site's `public/` folder.
 - **Solution:** Run:
   ```bash
   mkdir -p public/vendor
   cp -R node_modules/accessibility-toolkit/vendor/coddle-access public/vendor/
   ```
-  Ensure `public/vendor/coddle-access/js/widget.min.js` exists.
+  Ensure `public/vendor/accessibility-toolkit/js/widget.min.js` exists.
 
 ### Problem 3: Dyslexia font does not render or console shows font 404
-- **Cause:** Font files are missing from `public/vendor/coddle-access/fonts/`.
+- **Cause:** Font files are missing from `public/vendor/accessibility-toolkit/fonts/`.
 - **Solution:** Verify the font assets exist in your host directory:
   ```bash
-  ls -lh public/vendor/coddle-access/fonts/
+  ls -lh public/vendor/accessibility-toolkit/fonts/
   # Expected: OpenDyslexic3-Regular.woff (86 kB) and OpenDyslexic3-Regular.ttf (238 kB)
   ```
 
@@ -533,7 +533,7 @@ To completely remove the Accessibility Toolkit without leaving orphaned files:
 1. **Remove Layout Component:** Remove `<AccessibilityWidget />` and its import statement from your layout files (`src/layouts/*.astro`).
 2. **Remove Static Assets:**
    ```bash
-   rm -rf public/vendor/coddle-access
+   rm -rf public/vendor/accessibility-toolkit
    ```
 3. **Remove from Astro Configuration:** Remove `accessibilityToolkit` from `plugins` in `astro.config.mjs`.
 4. **Uninstall npm Package:**

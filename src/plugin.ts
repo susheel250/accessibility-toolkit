@@ -14,6 +14,7 @@ export interface AccessibilityToolkitSettings {
 	cdnBaseUrl?: string;
 }
 
+/** @deprecated Use AccessibilityToolkitSettings instead. Retained for backwards compatibility. */
 export type CoddleAccessSettings = AccessibilityToolkitSettings;
 
 export const DEFAULT_SETTINGS: AccessibilityToolkitSettings = {
@@ -401,9 +402,9 @@ const plugin: SandboxedPlugin = {
 
 			const cdnBase = settings.cdnBaseUrl && settings.cdnBaseUrl.startsWith("https://") ? settings.cdnBaseUrl.replace(/\/+$/, "") : "";
 			const hasCdn = Boolean(cdnBase);
-			const primarySrc = cdnBase ? `${cdnBase}/js/widget.min.js` : "/vendor/coddle-access/js/widget.min.js";
-			const fallbackSrc = cdnBase ? "/vendor/coddle-access/js/widget.min.js" : "";
-			const fontsSrc = cdnBase ? `${cdnBase}/fonts/` : "/vendor/coddle-access/fonts/";
+			const primarySrc = cdnBase ? `${cdnBase}/js/widget.min.js` : "/vendor/accessibility-toolkit/js/widget.min.js";
+			const fallbackSrc = cdnBase ? "/vendor/accessibility-toolkit/js/widget.min.js" : "/vendor/coddle-access/js/widget.min.js";
+			const fontsSrc = cdnBase ? `${cdnBase}/fonts/` : "/vendor/accessibility-toolkit/fonts/";
 
 			const initScript = `(function() {
   if (window.__accessibility_toolkit_initialized || window.__coddle_access_initialized) return;
@@ -581,7 +582,7 @@ const plugin: SandboxedPlugin = {
 					mode: hasCdn ? "cdn" : "local",
 					cdnConfigured: hasCdn,
 					sri: WIDGET_SRI_HASH,
-					html: `<script src="/vendor/coddle-access/js/widget.min.js" data-color="${settings.primaryColor}" data-position="${settings.positionDesktop}" data-lang="${settings.language}" async></script>`,
+					html: `<script src="/vendor/accessibility-toolkit/js/widget.min.js" data-color="${settings.primaryColor}" data-position="${settings.positionDesktop}" data-lang="${settings.language}" async></script>`,
 					cdnHtml: hasCdn
 						? `<script src="${cdnScriptUrl}" integrity="${WIDGET_SRI_HASH}" crossorigin="anonymous" data-color="${settings.primaryColor}" data-position="${settings.positionDesktop}" data-lang="${settings.language}" async></script>`
 						: null,
@@ -603,10 +604,10 @@ const plugin: SandboxedPlugin = {
         language: { default: cfg.language }
       };
       var cdnBase = (cfg.cdnBaseUrl && cfg.cdnBaseUrl.startsWith('https://')) ? cfg.cdnBaseUrl.replace(/\\/+$/, '') : '';
-      var primarySrc = cdnBase ? cdnBase + '/js/widget.min.js' : '/vendor/coddle-access/js/widget.min.js';
-      var fallbackSrc = cdnBase ? '/vendor/coddle-access/js/widget.min.js' : '';
+      var primarySrc = cdnBase ? cdnBase + '/js/widget.min.js' : '/vendor/accessibility-toolkit/js/widget.min.js';
+      var fallbackSrc = cdnBase ? '/vendor/accessibility-toolkit/js/widget.min.js' : '/vendor/coddle-access/js/widget.min.js';
       window._cyA11yAssets = {
-        fonts: cdnBase ? cdnBase + '/fonts/' : '/vendor/coddle-access/fonts/'
+        fonts: cdnBase ? cdnBase + '/fonts/' : '/vendor/accessibility-toolkit/fonts/'
       };
       var s = document.createElement('script');
       s.id = 'accessibility-toolkit-script';
@@ -624,11 +625,11 @@ const plugin: SandboxedPlugin = {
           fb.src = fallbackSrc;
           fb.async = true;
           fb.onerror = function() {
-            console.warn('[Accessibility Toolkit] Both CDN and local fallback widget scripts failed to load. Ensure assets exist in public/vendor/coddle-access/ or check CDN availability.');
+            console.warn('[Accessibility Toolkit] Both CDN and local fallback widget scripts failed to load. Ensure assets exist in public/vendor/accessibility-toolkit/ (or legacy public/vendor/coddle-access/) or check CDN availability.');
           };
           (document.body || document.head).appendChild(fb);
         } else {
-          console.warn('[Accessibility Toolkit] Widget script failed to load from ' + primarySrc + '. Ensure vendor assets exist in public/vendor/coddle-access/ or configure a valid CDN URL.');
+          console.warn('[Accessibility Toolkit] Widget script failed to load from ' + primarySrc + '. Ensure vendor assets exist in public/vendor/accessibility-toolkit/ (or legacy public/vendor/coddle-access/) or configure a valid CDN URL.');
         }
       };
       (document.body || document.head).appendChild(s);

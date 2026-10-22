@@ -5,7 +5,7 @@
 ### Added
 - Added optional `cdnBaseUrl` configuration in Block Kit admin and manifest schema for custom HTTPS CDN deployments.
 - Added SHA-384 Subresource Integrity (`integrity="sha384-PkHCo9yYYt43CM9mczXrTqkNN0ddgEpZos0hrTEP62/Iox7z6iWI3CfR06lzbWdK"`) and `crossorigin="anonymous"` for remote CDN script loading.
-- Added automatic dual-tier fallback in `<AccessibilityWidget />` and dynamic loader, seamlessly failing over from remote CDN to local `/vendor/coddle-access/` assets upon network failure.
+- Added automatic dual-tier fallback in `<AccessibilityWidget />` and dynamic loader, seamlessly failing over from remote CDN to local `/vendor/accessibility-toolkit/ (and legacy vendor/coddle-access/)` assets upon network failure.
 - Added unit tests covering local mode, CDN mode, SRI verification, and duplicate initialization suppression.
 
 ### Fixed

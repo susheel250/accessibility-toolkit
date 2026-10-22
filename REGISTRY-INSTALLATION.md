@@ -191,7 +191,7 @@ Confirm the files exist at these exact paths in your host repository:
 your-emdash-site/
 └── public/
     └── vendor/
-        └── coddle-access/
+        └── accessibility-toolkit/
             ├── js/
             │   ├── widget.min.js   <-- Essential (365 kB minified accessibility widget bundle)
             │   └── widget.js       <-- Unminified source bundle for inspection
@@ -206,13 +206,13 @@ To ensure vendor assets are reliably populated across clean checkouts, `npm inst
 ```json
 {
   "scripts": {
-    "postinstall": "mkdir -p public/vendor && cp -R node_modules/accessibility-toolkit/vendor/coddle-access public/vendor/"
+    "postinstall": "mkdir -p public/vendor && cp -R node_modules/accessibility-toolkit/vendor/accessibility-toolkit public/vendor/"
   }
 }
 ```
 
 > [!TIP]
-> **Cross-Platform / CI Note:** For Windows-compatible cross-platform environments where `cp -R` may not be present in cmd.exe, tools like `copyfiles` or `shx` can also be used (e.g. `"postinstall": "shx mkdir -p public/vendor && shx cp -r node_modules/accessibility-toolkit/vendor/coddle-access public/vendor/"`).
+> **Cross-Platform / CI Note:** For Windows-compatible cross-platform environments where `cp -R` may not be present in cmd.exe, tools like `copyfiles` or `shx` can also be used (e.g. `"postinstall": "shx mkdir -p public/vendor && shx cp -r node_modules/accessibility-toolkit/vendor/accessibility-toolkit public/vendor/"`).
 
 ---
 
@@ -491,7 +491,7 @@ curl -s http://localhost:4321/_emdash/api/plugins/accessibility-toolkit/config
 - **Solution:** Run:
   ```bash
   mkdir -p public/vendor
-  cp -R node_modules/accessibility-toolkit/vendor/coddle-access public/vendor/
+  cp -R node_modules/accessibility-toolkit/vendor/accessibility-toolkit public/vendor/
   ```
   Ensure `public/vendor/accessibility-toolkit/js/widget.min.js` exists.
 
@@ -524,7 +524,7 @@ When updating the package:
    ```
 2. Re-synchronize static vendor assets:
    ```bash
-   cp -R node_modules/accessibility-toolkit/vendor/coddle-access public/vendor/
+   cp -R node_modules/accessibility-toolkit/vendor/accessibility-toolkit public/vendor/
    ```
 3. Restart your server and verify changes in the admin panel.
 

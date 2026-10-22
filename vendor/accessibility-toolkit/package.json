@@ -1,0 +1,35 @@
+{
+  "name": "@emdash/accessibility-widget",
+  "version": "1.2.0",
+  "description": "Accessibility Toolkit - Lightweight, customizable web accessibility widget",
+  "main": "js/widget.min.js",
+  "module": "js/widget.js",
+  "files": [
+    "js",
+    "fonts",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "keywords": [
+    "accessibility",
+    "a11y",
+    "wcag",
+    "coddle",
+    "ada",
+    "compliance",
+    "screen-reader",
+    "contrast",
+    "dyslexia"
+  ],
+  "author": "EmDash Community",
+  "license": "MIT",
+  "homepage": "https://github.com/susheel250/accessibility-toolkit",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/susheel250/accessibility-toolkit.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -399,8 +399,8 @@ const plugin: SandboxedPlugin = {
 				},
 			};
 
-			const hasCdn = Boolean(settings.cdnBaseUrl && settings.cdnBaseUrl.startsWith("https://"));
-			const cdnBase = hasCdn ? settings.cdnBaseUrl.replace(/\/+$/, "") : "";
+			const cdnBase = settings.cdnBaseUrl && settings.cdnBaseUrl.startsWith("https://") ? settings.cdnBaseUrl.replace(/\/+$/, "") : "";
+			const hasCdn = Boolean(cdnBase);
 			const primarySrc = cdnBase ? `${cdnBase}/js/widget.min.js` : "/vendor/coddle-access/js/widget.min.js";
 			const fallbackSrc = cdnBase ? "/vendor/coddle-access/js/widget.min.js" : "";
 			const fontsSrc = cdnBase ? `${cdnBase}/fonts/` : "/vendor/coddle-access/fonts/";
@@ -572,8 +572,8 @@ const plugin: SandboxedPlugin = {
 			methods: ["GET"],
 			handler: async (_routeCtx, ctx) => {
 				const settings = await loadSavedSettings(ctx.settings);
-				const hasCdn = Boolean(settings.cdnBaseUrl && settings.cdnBaseUrl.startsWith("https://"));
-				const cdnBase = hasCdn ? settings.cdnBaseUrl.replace(/\/+$/, "") : "";
+				const cdnBase = settings.cdnBaseUrl && settings.cdnBaseUrl.startsWith("https://") ? settings.cdnBaseUrl.replace(/\/+$/, "") : "";
+				const hasCdn = Boolean(cdnBase);
 				const cdnScriptUrl = hasCdn ? `${cdnBase}/js/widget.min.js` : null;
 
 				return {

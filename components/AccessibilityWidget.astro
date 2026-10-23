@@ -13,6 +13,7 @@ interface Props {
   positionDesktop?: "bottom-right" | "bottom-left" | "top-right" | "top-left";
   positionMobile?: "bottom-right" | "bottom-left" | "top-right" | "top-left";
   statementUrl?: string;
+  cdnBaseUrl?: string;
   scriptSrc?: string;
   cdnSrc?: string;
   fontsUrl?: string;
@@ -22,7 +23,7 @@ interface Props {
 }
 
 const {
-  pluginId = "r_rznxjv6huupd4i7d",
+  pluginId = "",
   enabled = true,
   language = "en",
   primaryColor = "#1863DC",
@@ -31,9 +32,10 @@ const {
   positionDesktop = "bottom-right",
   positionMobile = "bottom-right",
   statementUrl = "",
+  cdnBaseUrl = "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/",
   scriptSrc = "/vendor/accessibility-toolkit/js/widget.min.js",
   cdnSrc = "",
-  fontsUrl = "/vendor/accessibility-toolkit/fonts/",
+  fontsUrl = "",
   integrity = "sha384-PkHCo9yYYt43CM9mczXrTqkNN0ddgEpZos0hrTEP62/Iox7z6iWI3CfR06lzbWdK",
   companyName = "",
   website = "",
@@ -46,7 +48,7 @@ const config = {
   },
   iconId: iconId,
   iconSize: Number(iconSize),
-  label: "Accessibility widget",
+  label: "Accessibility menu",
   heading: "Accessibility Toolkit",
   position: {
     mobile: positionMobile,
@@ -110,16 +112,35 @@ const config = {
 ---
 
 {enabled && (
-  <script is:inline define:vars={{ config, fontsUrl, scriptSrc, cdnSrc, integrity, pluginId }}>
+  <script is:inline define:vars={{ config, cdnBaseUrl, fontsUrl, scriptSrc, cdnSrc, integrity, pluginId }}>
     // @ts-nocheck
     (function() {
       // Prevent duplicate script loading and initialization
-      if (window.__accessibility_toolkit_initialized || window.__coddle_access_initialized || window.__accessiyes_initialized) {
+      if (window.__accessibility_toolkit_initialized) {
         return;
       }
       window.__accessibility_toolkit_initialized = true;
-      window.__coddle_access_initialized = true;
-      window.__accessiyes_initialized = true;
+
+      function sanitizeCdn(val) {
+        if (!val || typeof val !== "string") return "";
+        var t = val.trim();
+        if (!t || t.toLowerCase() === "local" || t.toLowerCase() === "none") return "";
+        if (t.toLowerCase() === "default") return "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/";
+        try {
+          var u = new URL(t);
+          if (u.protocol !== "https:") return "";
+          u.search = "";
+          u.hash = "";
+          var low = u.href.toLowerCase();
+          if (low.indexOf("coddle-accessibility") !== -1 || low.indexOf("coddle-access") !== -1 || low.indexOf("@v1.3.4") !== -1 || low.indexOf("@v1.3.5") !== -1) {
+            return "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit";
+          }
+          var p = u.pathname.replace(/\/+(js(\/widget(\.min)?\.js)?|fonts)\/?$/, "").replace(/\/+$/, "");
+          return u.origin + p;
+        } catch(e) {
+          return "";
+        }
+      }
 
       function applyShadowOverrides() {
         var container = document.getElementById("cya11y-container");
@@ -131,12 +152,13 @@ const config = {
           style.textContent = [
             ".cya11y-footer-brand { display: none !important; }",
             ".cya11y-footer:not(:has(.cya11y-footer-statement-link:not([style*='display: none']):not([style*='display:none']))) { display: none !important; }"
-          ].join("\n");
+          ].join(" ");
           sr.appendChild(style);
 
           var btn = sr.querySelector(".cya11y-menu-btn");
-          if (btn && btn.getAttribute("aria-label")) {
-            btn.setAttribute("aria-label", btn.getAttribute("aria-label").replace(/Coddle\s+/i, ""));
+          if (btn) {
+            btn.setAttribute("aria-label", "Accessibility menu");
+            btn.setAttribute("title", "Accessibility menu");
           }
 
           var syncFooter = function() {
@@ -158,16 +180,17 @@ const config = {
       function mountWidget(activeConfig) {
         window._cyA11yConfig = activeConfig || config;
 
-        // Resolve fonts URL: custom fontsUrl > activeConfig.cdnBaseUrl > default
-        var activeFontsUrl = fontsUrl;
-        if (activeConfig && activeConfig.cdnBaseUrl && activeConfig.cdnBaseUrl.startsWith("https://") && (fontsUrl === "/vendor/accessibility-toolkit/fonts/" || fontsUrl === "/vendor/coddle-access/fonts/")) {
-          activeFontsUrl = activeConfig.cdnBaseUrl.replace(/\/+$/, "") + "/fonts/";
+        var activeCdnBase = sanitizeCdn((activeConfig && activeConfig.cdnBaseUrl) || cdnBaseUrl);
+        var activeFontsUrl = (activeConfig && activeConfig.fontsUrl) || fontsUrl;
+        if (!activeFontsUrl) {
+          activeFontsUrl = activeCdnBase ? activeCdnBase + "/fonts/" : "/vendor/accessibility-toolkit/fonts/";
         }
+
         window._cyA11yAssets = {
           fonts: activeFontsUrl
         };
 
-        if (document.getElementById("accessibility-toolkit-script") || document.getElementById("coddle-access-script")) {
+        if (document.getElementById("accessibility-toolkit-script")) {
           return;
         }
 
@@ -180,9 +203,13 @@ const config = {
           primarySrc = cdnSrc;
           fallbackSrc = scriptSrc;
           useSri = true;
-        } else if (activeConfig && activeConfig.cdnBaseUrl && activeConfig.cdnBaseUrl.startsWith("https://")) {
-          primarySrc = activeConfig.cdnBaseUrl.replace(/\/+$/, "") + "/js/widget.min.js";
-          fallbackSrc = scriptSrc;
+        } else if (activeConfig && activeConfig.scriptUrl) {
+          primarySrc = activeConfig.scriptUrl;
+          fallbackSrc = activeConfig.cdnConfigured ? "/vendor/accessibility-toolkit/js/widget.min.js" : "";
+          useSri = Boolean(activeConfig.cdnConfigured);
+        } else if (activeCdnBase) {
+          primarySrc = activeCdnBase + "/js/widget.min.js";
+          fallbackSrc = "/vendor/accessibility-toolkit/js/widget.min.js";
           useSri = true;
         }
 
@@ -198,7 +225,8 @@ const config = {
         }
 
         script.onerror = function() {
-          if (fallbackSrc) {
+          if (fallbackSrc && fallbackSrc !== primarySrc) {
+            if (document.getElementById("accessibility-toolkit-script-fallback")) return;
             console.warn("[Accessibility Toolkit] Primary script failed to load from " + primarySrc + ", attempting local fallback: " + fallbackSrc);
             var fallback = document.createElement("script");
             fallback.id = "accessibility-toolkit-script-fallback";
@@ -206,15 +234,17 @@ const config = {
             fallback.src = fallbackSrc;
             fallback.async = true;
             fallback.onerror = function() {
-              console.warn("[Accessibility Toolkit] Both primary (" + primarySrc + ") and fallback (" + fallbackSrc + ") failed to load. Ensure assets exist in public/vendor/accessibility-toolkit/ (or legacy public/vendor/coddle-access/) or check CDN availability.");
+              window.__accessibility_toolkit_initialized = false;
+              console.warn("[Accessibility Toolkit] Both primary (" + primarySrc + ") and fallback (" + fallbackSrc + ") failed to load. Ensure assets exist in public/vendor/accessibility-toolkit/ or check CDN availability.");
             };
             (document.body || document.head).appendChild(fallback);
           } else {
-            console.warn("[Accessibility Toolkit] Widget script failed to load from " + primarySrc + ". To use local assets, ensure files exist in public/vendor/accessibility-toolkit/ (or legacy public/vendor/coddle-access/) or configure a valid CDN URL.");
+            window.__accessibility_toolkit_initialized = false;
+            console.warn("[Accessibility Toolkit] Widget script failed to load from " + primarySrc + ". Ensure assets exist in public/vendor/accessibility-toolkit/ or configure a valid CDN URL.");
           }
         };
 
-                if (!applyShadowOverrides()) {
+        if (!applyShadowOverrides()) {
           var obs = new MutationObserver(function() {
             if (applyShadowOverrides()) {
               obs.disconnect();
@@ -223,7 +253,7 @@ const config = {
           obs.observe(document.body || document.documentElement, { childList: true, subtree: true });
           setTimeout(function() {
             obs.disconnect();
-          }, 10000);
+          }, 30000);
         }
 
         (document.body || document.head).appendChild(script);
@@ -242,10 +272,9 @@ const config = {
       function tryEndpoint(idx) {
         if (idx >= endpoints.length) {
           if (pluginId) {
-            console.warn("[Accessibility Toolkit] Plugin endpoint unreachable for pluginId: " + pluginId + ". Widget will not be mounted.");
-            return;
+            console.warn("[Accessibility Toolkit] Plugin endpoint unreachable for pluginId: " + pluginId + ". Falling back to standalone mode.");
           }
-          // In standalone mode (no pluginId), mount with component props
+          // Mount in standalone mode with component props or defaults
           mountWidget(config);
           return;
         }
@@ -268,7 +297,10 @@ const config = {
               if (data.positionDesktop) merged.position.desktop = data.positionDesktop;
               if (data.positionMobile) merged.position.mobile = data.positionMobile;
               if (data.language) merged.language.default = data.language;
-              if (data.cdnBaseUrl) merged.cdnBaseUrl = data.cdnBaseUrl;
+              if (data.cdnBaseUrl !== undefined) merged.cdnBaseUrl = data.cdnBaseUrl;
+              if (data.cdnConfigured !== undefined) merged.cdnConfigured = data.cdnConfigured;
+              if (data.scriptUrl) merged.scriptUrl = data.scriptUrl;
+              if (data.fontsUrl) merged.fontsUrl = data.fontsUrl;
               if (data.statementUrl) {
                 merged.modules.statement.enabled = true;
                 merged.modules.statement.url = data.statementUrl;

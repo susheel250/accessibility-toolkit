@@ -2,6 +2,105 @@ import type { SandboxedPlugin } from "emdash/plugin";
 
 export const WIDGET_SRI_HASH = "sha384-PkHCo9yYYt43CM9mczXrTqkNN0ddgEpZos0hrTEP62/Iox7z6iWI3CfR06lzbWdK";
 
+export const CANONICAL_CDN_BASE_URL =
+	"https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/";
+
+export const DEFAULT_CDN_BASE_URL = CANONICAL_CDN_BASE_URL;
+
+export const LOCAL_WIDGET_SCRIPT_PATH = "/vendor/accessibility-toolkit/js/widget.min.js";
+export const LOCAL_FONTS_PATH = "/vendor/accessibility-toolkit/fonts/";
+export const LEGACY_LOCAL_WIDGET_SCRIPT_PATH = "/vendor/coddle-access/js/widget.min.js";
+
+/**
+ * Sanitizes and normalizes a CDN base URL.
+ * - Strips tracking query parameters (e.g. ?utm_source=chatgpt.com) and hash fragments.
+ * - Strips accidental file suffixes (/js/widget.min.js, /js/widget.js, /js, /fonts, /fonts/).
+ * - Strips trailing slashes.
+ * - Migrates obsolete repository URLs (coddle-accessibility, coddle-access, @v1.3.4, @v1.3.5) to the canonical CDN base URL.
+ * - Resolves "default" to CANONICAL_CDN_BASE_URL.
+ * - Resolves "local" or "none" to empty string (local mode).
+ * - Rejects non-HTTPS or malformed URLs, returning empty string.
+ */
+export function sanitizeCdnBaseUrl(val: unknown): string {
+	if (typeof val !== "string") return "";
+	const trimmed = val.trim();
+	if (!trimmed) return "";
+
+	if (trimmed.toLowerCase() === "default") {
+		return CANONICAL_CDN_BASE_URL;
+	}
+	if (trimmed.toLowerCase() === "local" || trimmed.toLowerCase() === "none") {
+		return "";
+	}
+
+	try {
+		const parsed = new URL(trimmed);
+		if (parsed.protocol !== "https:") return "";
+
+		// Remove search params and hash
+		parsed.search = "";
+		parsed.hash = "";
+
+		// Migrate obsolete repository and legacy release paths
+		const lowerHref = parsed.href.toLowerCase();
+		if (
+			lowerHref.includes("coddle-accessibility") ||
+			lowerHref.includes("coddle-access")
+		) {
+			return CANONICAL_CDN_BASE_URL;
+		}
+
+		// Strip accidental file/subpath suffixes
+		let pathname = parsed.pathname
+			.replace(/[/]+(js([/]widget([.]min)?[.]js)?|fonts)[/]?$/, "")
+			.replace(/[/]+$/, "");
+
+		return `${parsed.origin}${pathname}`;
+	} catch {
+		return "";
+	}
+}
+
+export interface EffectiveCdnConfig {
+	cdnConfigured: boolean;
+	mode: "cdn" | "local";
+	cdnBaseUrl: string;
+	scriptUrl: string;
+	fontsUrl: string;
+	sri: string;
+}
+
+/**
+ * Resolves effective CDN configuration from saved cdnBaseUrl setting.
+ * When cdnBaseUrl resolves to an HTTPS URL, returns mode: "cdn" with canonical asset paths.
+ * When cdnBaseUrl is empty, "local", or invalid, returns mode: "local" with local vendor asset paths.
+ */
+export function resolveCdnConfig(cdnBaseUrlSetting: unknown): EffectiveCdnConfig {
+	const sanitized = sanitizeCdnBaseUrl(cdnBaseUrlSetting);
+	const hasCdn = Boolean(sanitized);
+
+	if (hasCdn) {
+		const cleanBase = sanitized.replace(/[/]+$/, "");
+		return {
+			cdnConfigured: true,
+			mode: "cdn",
+			cdnBaseUrl: `${cleanBase}/`,
+			scriptUrl: `${cleanBase}/js/widget.min.js`,
+			fontsUrl: `${cleanBase}/fonts/`,
+			sri: WIDGET_SRI_HASH,
+		};
+	}
+
+	return {
+		cdnConfigured: false,
+		mode: "local",
+		cdnBaseUrl: "",
+		scriptUrl: LOCAL_WIDGET_SCRIPT_PATH,
+		fontsUrl: LOCAL_FONTS_PATH,
+		sri: WIDGET_SRI_HASH,
+	};
+}
+
 export interface AccessibilityToolkitSettings {
 	enabled: boolean;
 	language: string;
@@ -26,7 +125,7 @@ export const DEFAULT_SETTINGS: AccessibilityToolkitSettings = {
 	positionDesktop: "bottom-right",
 	positionMobile: "bottom-right",
 	statementUrl: "/accessibility-statement",
-	cdnBaseUrl: "",
+	cdnBaseUrl: CANONICAL_CDN_BASE_URL,
 };
 
 export const SUPPORTED_LANGUAGES = [
@@ -72,6 +171,18 @@ export const PRESET_COLORS = [
 	{ hex: "#16A34A", label: "Emerald" },
 	{ hex: "#0F172A", label: "Slate Dark" },
 ];
+
+export function normalizeBoolean(val: unknown, fallback: boolean = true): boolean {
+	if (val === undefined || val === null) return fallback;
+	if (typeof val === "boolean") return val;
+	if (typeof val === "string") {
+		const s = val.trim().toLowerCase();
+		if (s === "false" || s === "0" || s === "off" || s === "no") return false;
+		if (s === "true" || s === "1" || s === "on" || s === "yes") return true;
+	}
+	if (typeof val === "number") return val !== 0;
+	return fallback;
+}
 
 export function toValid7CharHex(val: string): string {
 	if (!val) return "#1863DC";
@@ -231,8 +342,8 @@ export function renderAdminBlocks(
 				elements.select("positionMobile", "Mobile Screen Position", POSITIONS, {
 					initialValue: settings.positionMobile,
 				}),
-				elements.textInput("cdnBaseUrl", "Custom CDN Base URL (Optional)", {
-					placeholder: "https://your-cdn.example.com/assets",
+				elements.textInput("cdnBaseUrl", "CDN Base URL (Optional)", {
+					placeholder: CANONICAL_CDN_BASE_URL,
 					initialValue: settings.cdnBaseUrl || "",
 				}),
 				elements.textInput("statementUrl", "Accessibility Statement URL", {
@@ -249,7 +360,7 @@ export function renderAdminBlocks(
 		blocks.fields([
 			{
 				label: "Active Settings Summary",
-				value: `Status: ${settings.enabled ? "Active (Enabled)" : "Disabled"} • Color: ${settings.primaryColor} • Icon: ${settings.iconId} (${settings.iconSize}px) • Desktop: ${settings.positionDesktop} • Mobile: ${settings.positionMobile}`,
+				value: `Status: ${settings.enabled ? "Active (Enabled)" : "Disabled"} • Color: ${settings.primaryColor} • Icon: ${settings.iconId} (${settings.iconSize}px) • Desktop: ${settings.positionDesktop} • Mobile: ${settings.positionMobile} • CDN: ${settings.cdnBaseUrl ? "Configured" : "Local Assets"}`,
 			},
 			{
 				label: "Quick Palette Suggestions",
@@ -259,7 +370,7 @@ export function renderAdminBlocks(
 			{
 				label: "Frontend Integration",
 				value:
-					"Automatic injection on all pages via page:fragments hook in <EmDashBodyEnd />. Also supports native companion component <AccessibilityWidget />.",
+					"In EmDash, sandboxed registry plugins require theme integration. Add the dynamic loader snippet (from the snippet endpoint) or companion <AccessibilityWidget /> to your layout (e.g. src/layouts/Base.astro).",
 			},
 			{
 				label: "Compliance Standards",
@@ -271,7 +382,8 @@ export function renderAdminBlocks(
 }
 
 async function loadSavedSettings(settingsAccess: any): Promise<AccessibilityToolkitSettings> {
-	const enabled = (await settingsAccess.get("enabled")) ?? DEFAULT_SETTINGS.enabled;
+	const enabledRaw = await settingsAccess.get("enabled");
+	const enabled = normalizeBoolean(enabledRaw, DEFAULT_SETTINGS.enabled);
 	const language = (await settingsAccess.get("language")) ?? DEFAULT_SETTINGS.language;
 	const primaryColor = (await settingsAccess.get("primaryColor")) ?? DEFAULT_SETTINGS.primaryColor;
 	const iconIdRaw = await settingsAccess.get("iconId");
@@ -287,7 +399,12 @@ async function loadSavedSettings(settingsAccess: any): Promise<AccessibilityTool
 	const statementUrl =
 		(await settingsAccess.get("statementUrl")) ?? DEFAULT_SETTINGS.statementUrl;
 	const cdnBaseUrlRaw = await settingsAccess.get("cdnBaseUrl");
-	const cdnBaseUrl = typeof cdnBaseUrlRaw === "string" ? cdnBaseUrlRaw.trim() : "";
+	let cdnBaseUrl: string;
+	if (cdnBaseUrlRaw === undefined || cdnBaseUrlRaw === null) {
+		cdnBaseUrl = DEFAULT_SETTINGS.cdnBaseUrl || "";
+	} else {
+		cdnBaseUrl = sanitizeCdnBaseUrl(cdnBaseUrlRaw);
+	}
 
 	return {
 		enabled: Boolean(enabled),
@@ -305,7 +422,7 @@ async function loadSavedSettings(settingsAccess: any): Promise<AccessibilityTool
 /**
  * Accessibility Toolkit - Sandboxed EmDash Plugin Entrypoint
  *
- * Runs securely inside EmDash's workerd sandbox.
+ * Runs securely inside EmDash workerd sandbox.
  * Provides custom Block Kit admin interface at /_emdash/admin/plugins/$id/settings,
  * declarative settings schema for the plugin manager,
  * and public HTTP endpoints for widget configuration and embedding.
@@ -334,11 +451,16 @@ const plugin: SandboxedPlugin = {
 			const settings = await loadSavedSettings(ctx.settings);
 			if (!settings.enabled) return [];
 
+			const cdnConfig = resolveCdnConfig(settings.cdnBaseUrl);
+			const primarySrc = cdnConfig.scriptUrl;
+			const fallbackSrc = cdnConfig.cdnConfigured ? LOCAL_WIDGET_SCRIPT_PATH : "";
+			const fontsSrc = cdnConfig.fontsUrl;
+
 			const config = {
 				status: { mobile: true, desktop: true },
 				iconId: settings.iconId,
 				iconSize: settings.iconSize,
-				label: "Accessibility widget",
+				label: "Accessibility menu",
 				heading: "Accessibility Toolkit",
 				position: {
 					mobile: settings.positionMobile,
@@ -400,16 +522,10 @@ const plugin: SandboxedPlugin = {
 				},
 			};
 
-			const cdnBase = settings.cdnBaseUrl && settings.cdnBaseUrl.startsWith("https://") ? settings.cdnBaseUrl.replace(/\/+$/, "") : "";
-			const hasCdn = Boolean(cdnBase);
-			const primarySrc = cdnBase ? `${cdnBase}/js/widget.min.js` : "/vendor/accessibility-toolkit/js/widget.min.js";
-			const fallbackSrc = cdnBase ? "/vendor/accessibility-toolkit/js/widget.min.js" : "/vendor/coddle-access/js/widget.min.js";
-			const fontsSrc = cdnBase ? `${cdnBase}/fonts/` : "/vendor/accessibility-toolkit/fonts/";
-
 			const initScript = `(function() {
-  if (window.__accessibility_toolkit_initialized || window.__coddle_access_initialized) return;
+  if (window.__accessibility_toolkit_initialized) return;
+  if (document.getElementById('accessibility-toolkit-script')) return;
   window.__accessibility_toolkit_initialized = true;
-  window.__coddle_access_initialized = true;
   window._cyA11yConfig = ${JSON.stringify(config)};
   window._cyA11yAssets = {
     fonts: '${fontsSrc}'
@@ -418,53 +534,49 @@ const plugin: SandboxedPlugin = {
   s.id = 'accessibility-toolkit-script';
   s.src = '${primarySrc}';
   s.async = true;
-  ${cdnBase ? "s.integrity = '" + WIDGET_SRI_HASH + "'; s.crossOrigin = 'anonymous';" : ""}
+  ${cdnConfig.cdnConfigured ? "s.integrity = '" + WIDGET_SRI_HASH + "'; s.crossOrigin = 'anonymous';" : ""}
   ${fallbackSrc ? "s.onerror = function() { var fb = document.createElement('script'); fb.id = 'accessibility-toolkit-script-fallback'; fb.src = '" + fallbackSrc + "'; fb.async = true; (document.body || document.head).appendChild(fb); };" : ""}
-        function applyShadowOverrides() {
-        var container = document.getElementById("cya11y-container");
-        if (!container || !container.shadowRoot) return false;
-        var sr = container.shadowRoot;
-        if (!sr.getElementById("a11y-toolkit-overrides")) {
-          var style = document.createElement("style");
-          style.id = "a11y-toolkit-overrides";
-          style.textContent = [
-            ".cya11y-footer-brand { display: none !important; }",
-            ".cya11y-footer:not(:has(.cya11y-footer-statement-link:not([style*='display: none']):not([style*='display:none']))) { display: none !important; }"
-          ].join("\\n");
-          sr.appendChild(style);
 
-          var btn = sr.querySelector(".cya11y-menu-btn");
-          if (btn && btn.getAttribute("aria-label")) {
-            btn.setAttribute("aria-label", btn.getAttribute("aria-label").replace(/Coddle\\s+/i, ""));
-          }
+  function applyShadowOverrides() {
+    var container = document.getElementById("cya11y-container");
+    if (!container || !container.shadowRoot) return false;
+    var sr = container.shadowRoot;
+    if (!sr.getElementById("a11y-toolkit-overrides")) {
+      var style = document.createElement("style");
+      style.id = "a11y-toolkit-overrides";
+      style.textContent = [
+        ".cya11y-footer-brand { display: none !important; }",
+        ".cya11y-footer:not(:has(.cya11y-footer-statement-link:not([style*='display: none']):not([style*='display:none']))) { display: none !important; }"
+      ].join(" ");
+      sr.appendChild(style);
 
-          var syncFooter = function() {
-            var footer = sr.querySelector(".cya11y-footer");
-            if (!footer) return;
-            var statement = footer.querySelector(".cya11y-footer-statement-link");
-            var hasStatement = statement && window.getComputedStyle(statement).display !== "none";
-            if (!hasStatement) {
-              footer.style.display = "none";
-            }
-          };
-
-          var footerObserver = new MutationObserver(syncFooter);
-          footerObserver.observe(sr, { childList: true, subtree: true });
+      var syncFooter = function() {
+        var footer = sr.querySelector(".cya11y-footer");
+        if (!footer) return;
+        var statement = footer.querySelector(".cya11y-footer-statement-link");
+        var hasStatement = statement && window.getComputedStyle(statement).display !== "none";
+        if (!hasStatement) {
+          footer.style.display = "none";
         }
-        return true;
-      }
+      };
 
-      if (!applyShadowOverrides()) {
-        var obs = new MutationObserver(function() {
-          if (applyShadowOverrides()) {
-            obs.disconnect();
-          }
-        });
-        obs.observe(document.body || document.documentElement, { childList: true, subtree: true });
-        setTimeout(function() { obs.disconnect(); }, 10000);
-      }
+      var footerObserver = new MutationObserver(syncFooter);
+      footerObserver.observe(sr, { childList: true, subtree: true });
+    }
+    return true;
+  }
 
-      (document.body || document.head).appendChild(s);
+  if (!applyShadowOverrides()) {
+    var obs = new MutationObserver(function() {
+      if (applyShadowOverrides()) {
+        obs.disconnect();
+      }
+    });
+    obs.observe(document.body || document.documentElement, { childList: true, subtree: true });
+    setTimeout(function() { obs.disconnect(); }, 30000);
+  }
+
+  (document.body || document.head).appendChild(s);
 })();`;
 
 			return [
@@ -531,9 +643,26 @@ const plugin: SandboxedPlugin = {
 					}
 
 					// Validate CDN Base URL
-					const rawCdnUrl = String(values.cdnBaseUrl || "").trim();
-					if (rawCdnUrl && !rawCdnUrl.startsWith("https://")) {
-						validationErrors.push("Custom CDN Base URL must be a valid HTTPS URL (e.g. https://your-cdn.example.com/assets)");
+					let cleanCdnUrl = "";
+					const rawCdnUrl = values.cdnBaseUrl !== undefined ? String(values.cdnBaseUrl).trim() : undefined;
+					if (rawCdnUrl !== undefined) {
+						if (rawCdnUrl === "" || rawCdnUrl.toLowerCase() === "local" || rawCdnUrl.toLowerCase() === "none") {
+							cleanCdnUrl = "";
+						} else if (rawCdnUrl.toLowerCase() === "default") {
+							cleanCdnUrl = CANONICAL_CDN_BASE_URL;
+						} else if (!rawCdnUrl.startsWith("https://")) {
+							validationErrors.push("Custom CDN Base URL must be a valid HTTPS URL (e.g. https://your-cdn.example.com/assets) or 'default'");
+						} else {
+							try {
+								const p = new URL(rawCdnUrl);
+								if (p.protocol !== "https:") throw new Error();
+								cleanCdnUrl = rawCdnUrl;
+							} catch {
+								validationErrors.push("Custom CDN Base URL is not a valid HTTPS URL");
+							}
+						}
+					} else {
+						cleanCdnUrl = currentSettings.cdnBaseUrl || "";
 					}
 
 					if (validationErrors.length > 0) {
@@ -563,7 +692,7 @@ const plugin: SandboxedPlugin = {
 						positionDesktop: normalizePosition(values.positionDesktop ?? currentSettings.positionDesktop),
 						positionMobile: normalizePosition(values.positionMobile ?? currentSettings.positionMobile),
 						statementUrl: rawUrl,
-						cdnBaseUrl: rawCdnUrl,
+						cdnBaseUrl: cleanCdnUrl,
 					};
 
 					// Persist to EmDash settings store
@@ -600,12 +729,23 @@ const plugin: SandboxedPlugin = {
 		config: {
 			public: true,
 			methods: ["GET"],
-			handler: async (_routeCtx, ctx) => {
+			handler: async (routeCtx: any, ctx) => {
 				const settings = await loadSavedSettings(ctx.settings);
+				const cdnConfig = resolveCdnConfig(settings.cdnBaseUrl);
+
+				const requestedPluginId =
+					(routeCtx?.request?.url &&
+						routeCtx.request.url.match(/_emdash\/api\/plugins\/([^/?#]+)/)?.[1]) ||
+					ctx.plugin.id;
 
 				return {
 					...settings,
-					version: "1.3.5",
+					cdnBaseUrl: settings.cdnBaseUrl,
+					cdnConfigured: cdnConfig.cdnConfigured,
+					mode: cdnConfig.mode,
+					scriptUrl: cdnConfig.scriptUrl,
+					fontsUrl: cdnConfig.fontsUrl,
+					version: "1.3.6",
 					toolkit: "Accessibility Toolkit",
 					publisher: "EmDash Community",
 					sri: WIDGET_SRI_HASH,
@@ -615,65 +755,93 @@ const plugin: SandboxedPlugin = {
 		snippet: {
 			public: true,
 			methods: ["GET"],
-			handler: async (_routeCtx, ctx) => {
+			handler: async (routeCtx: any, ctx) => {
 				const settings = await loadSavedSettings(ctx.settings);
-				const cdnBase = settings.cdnBaseUrl && settings.cdnBaseUrl.startsWith("https://") ? settings.cdnBaseUrl.replace(/\/+$/, "") : "";
-				const hasCdn = Boolean(cdnBase);
-				const cdnScriptUrl = hasCdn ? `${cdnBase}/js/widget.min.js` : null;
+				const cdnConfig = resolveCdnConfig(settings.cdnBaseUrl);
 
-				return {
-					enabled: settings.enabled,
-					mode: hasCdn ? "cdn" : "local",
-					cdnConfigured: hasCdn,
-					sri: WIDGET_SRI_HASH,
-					html: `<script src="/vendor/accessibility-toolkit/js/widget.min.js" data-color="${settings.primaryColor}" data-position="${settings.positionDesktop}" data-lang="${settings.language}" async></script>`,
-					cdnHtml: hasCdn
-						? `<script src="${cdnScriptUrl}" integrity="${WIDGET_SRI_HASH}" crossorigin="anonymous" data-color="${settings.primaryColor}" data-position="${settings.positionDesktop}" data-lang="${settings.language}" async></script>`
-						: null,
-					dynamicLoader: `<script>
+				const requestedPluginId =
+					(routeCtx?.request?.url &&
+						routeCtx.request.url.match(/_emdash\/api\/plugins\/([^/?#]+)/)?.[1]) ||
+					ctx.plugin.id;
+
+				const html = cdnConfig.cdnConfigured
+					? `<script src="${cdnConfig.scriptUrl}" integrity="${WIDGET_SRI_HASH}" crossorigin="anonymous" data-color="${settings.primaryColor}" data-position="${settings.positionDesktop}" data-lang="${settings.language}" async></script>`
+					: `<script src="${cdnConfig.scriptUrl}" data-color="${settings.primaryColor}" data-position="${settings.positionDesktop}" data-lang="${settings.language}" async></script>`;
+
+				const cdnHtml = cdnConfig.cdnConfigured ? html : null;
+
+				const dynamicLoader = `<script>
 (function() {
   if (window.__accessibility_toolkit_initialized) return;
+  if (document.getElementById('accessibility-toolkit-script')) return;
   window.__accessibility_toolkit_initialized = true;
-  fetch('/_emdash/api/plugins/${ctx.plugin.id}/config')
-    .then(function(r) { return r.ok ? r.json() : null; })
-    .then(function(res) {
-      var cfg = (res && res.data) || res;
-      if (!cfg || cfg.enabled === false) return;
+  var endpoints = [
+    '/_emdash/api/plugins/${requestedPluginId}/config'
+  ];
+  if ('${requestedPluginId}' !== 'accessibility-toolkit') {
+    endpoints.push('/_emdash/api/plugins/accessibility-toolkit/config');
+  }
+  endpoints.push('/_emdash/api/plugins/accessibility/config');
+
+  function tryFetchConfig(idx) {
+    if (idx >= endpoints.length) {
+      window.__accessibility_toolkit_initialized = false;
+      console.warn('[Accessibility Toolkit] All candidate configuration endpoints failed.');
+      return;
+    }
+    fetch(endpoints[idx])
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(res) {
+        var cfg = (res && res.data) || res;
+        if (!cfg) {
+          tryFetchConfig(idx + 1);
+          return;
+        }
+        if (cfg.enabled === false) return;
       window._cyA11yConfig = {
         primaryColor: cfg.primaryColor,
         iconId: cfg.iconId,
         iconSize: cfg.iconSize,
         position: { desktop: cfg.positionDesktop, mobile: cfg.positionMobile },
         statementUrl: cfg.statementUrl,
-        language: { default: cfg.language }
+        language: { default: cfg.language },
+        label: "Accessibility menu"
       };
-      var cdnBase = (cfg.cdnBaseUrl && cfg.cdnBaseUrl.startsWith('https://')) ? cfg.cdnBaseUrl.replace(/\\/+$/, '') : '';
-      var primarySrc = cdnBase ? cdnBase + '/js/widget.min.js' : '/vendor/accessibility-toolkit/js/widget.min.js';
-      var fallbackSrc = cdnBase ? '/vendor/accessibility-toolkit/js/widget.min.js' : '/vendor/coddle-access/js/widget.min.js';
+
+      var cdnConfigured = Boolean(cfg.cdnConfigured);
+      var primarySrc = cfg.scriptUrl || (cdnConfigured && cfg.cdnBaseUrl ? cfg.cdnBaseUrl.replace(/[/]+$/, '') + '/js/widget.min.js' : '/vendor/accessibility-toolkit/js/widget.min.js');
+      var fontsSrc = cfg.fontsUrl || (cdnConfigured && cfg.cdnBaseUrl ? cfg.cdnBaseUrl.replace(/[/]+$/, '') + '/fonts/' : '/vendor/accessibility-toolkit/fonts/');
+      var fallbackSrc = cdnConfigured ? '/vendor/accessibility-toolkit/js/widget.min.js' : '';
+
       window._cyA11yAssets = {
-        fonts: cdnBase ? cdnBase + '/fonts/' : '/vendor/accessibility-toolkit/fonts/'
+        fonts: fontsSrc
       };
+
+      if (document.getElementById('accessibility-toolkit-script')) return;
       var s = document.createElement('script');
       s.id = 'accessibility-toolkit-script';
       s.src = primarySrc;
       s.async = true;
-      if (cdnBase) {
+      if (cdnConfigured) {
         s.integrity = '${WIDGET_SRI_HASH}';
         s.crossOrigin = 'anonymous';
       }
       s.onerror = function() {
-        if (fallbackSrc) {
+        if (fallbackSrc && fallbackSrc !== primarySrc) {
+          if (document.getElementById('accessibility-toolkit-script-fallback')) return;
           console.warn('[Accessibility Toolkit] Primary CDN script failed to load from ' + primarySrc + ', attempting local fallback: ' + fallbackSrc);
           var fb = document.createElement('script');
           fb.id = 'accessibility-toolkit-script-fallback';
           fb.src = fallbackSrc;
           fb.async = true;
           fb.onerror = function() {
-            console.warn('[Accessibility Toolkit] Both CDN and local fallback widget scripts failed to load. Ensure assets exist in public/vendor/accessibility-toolkit/ (or legacy public/vendor/coddle-access/) or check CDN availability.');
+            window.__accessibility_toolkit_initialized = false;
+            console.warn('[Accessibility Toolkit] Both CDN (' + primarySrc + ') and local fallback (' + fallbackSrc + ') failed to load. Ensure assets exist in public/vendor/accessibility-toolkit/ or check CDN availability.');
           };
           (document.body || document.head).appendChild(fb);
         } else {
-          console.warn('[Accessibility Toolkit] Widget script failed to load from ' + primarySrc + '. Ensure vendor assets exist in public/vendor/accessibility-toolkit/ (or legacy public/vendor/coddle-access/) or configure a valid CDN URL.');
+          window.__accessibility_toolkit_initialized = false;
+          console.warn('[Accessibility Toolkit] Widget script failed to load from ' + primarySrc + '. Ensure vendor assets exist in public/vendor/accessibility-toolkit/ or configure a valid CDN URL.');
         }
       };
 
@@ -686,14 +854,9 @@ const plugin: SandboxedPlugin = {
           style.id = "a11y-toolkit-overrides";
           style.textContent = [
             ".cya11y-footer-brand { display: none !important; }",
-            ".cya11y-footer:not(:has(.cya11y-footer-statement-link:not([style*='display: none']):not([style*='display:none']))) { display: none !important; }"
-          ].join("\\n");
+            ".cya11y-footer:not(:has(.cya11y-footer-statement-link:not([style*=\\'display: none\\']):not([style*=\\'display:none\\']))) { display: none !important; }"
+          ].join(" ");
           sr.appendChild(style);
-
-          var btn = sr.querySelector(".cya11y-menu-btn");
-          if (btn && btn.getAttribute("aria-label")) {
-            btn.setAttribute("aria-label", btn.getAttribute("aria-label").replace(/Coddle\\s+/i, ""));
-          }
 
           var syncFooter = function() {
             var footer = sr.querySelector(".cya11y-footer");
@@ -723,11 +886,26 @@ const plugin: SandboxedPlugin = {
 
       (document.body || document.head).appendChild(s);
     })
-    .catch(function(err) {
-      console.warn('[Accessibility Toolkit] Failed to load configuration:', err);
-    });
+      .catch(function(err) {
+        tryFetchConfig(idx + 1);
+      });
+  }
+
+  tryFetchConfig(0);
 })();
-</script>`,
+</script>`;
+
+				return {
+					enabled: settings.enabled,
+					mode: cdnConfig.mode,
+					cdnConfigured: cdnConfig.cdnConfigured,
+					cdnBaseUrl: cdnConfig.cdnBaseUrl,
+					scriptUrl: cdnConfig.scriptUrl,
+					fontsUrl: cdnConfig.fontsUrl,
+					sri: WIDGET_SRI_HASH,
+					html,
+					cdnHtml,
+					dynamicLoader,
 					companion: "In Astro layouts, you can also render the native companion <AccessibilityWidget />.",
 				};
 			},
@@ -739,7 +917,7 @@ const plugin: SandboxedPlugin = {
 				return {
 					status: "active",
 					pluginId: ctx.plugin.id,
-					version: "1.3.5",
+					version: "1.3.6",
 					brand: "Accessibility Toolkit",
 					vendor: "EmDash Community",
 					website: "https://emdashcms.com",
@@ -750,4 +928,3 @@ const plugin: SandboxedPlugin = {
 };
 
 export default plugin;
-

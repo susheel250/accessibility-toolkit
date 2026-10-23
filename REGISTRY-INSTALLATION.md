@@ -1,593 +1,233 @@
-# Accessibility Toolkit: EmDash Plugin Registry Installation & Integration Guide
+# Accessibility Toolkit — Complete Installation & Enablement Guide
 
-> A practical developer guide for installing the **Accessibility Toolkit** from the EmDash Plugin Registry, configuring administrative settings, and displaying the WCAG 2.2 Level AA accessibility widget on public website pages.
-
----
-
-## Table of Contents
-
-1. [Overview and Prerequisites](#1-overview-and-prerequisites)
-2. [EmDash Registry Architecture & Sandbox Limitations](#2-emdash-registry-architecture--sandbox-limitations)
-3. [Required Files and Asset Distribution](#3-required-files-and-asset-distribution)
-4. [Registry Installation and Plugin Activation](#4-registry-installation-and-plugin-activation)
-5. [Copying Vendor Assets to the Host `public/` Directory](#5-copying-vendor-assets-to-the-host-public-directory)
-6. [Admin Configuration](#6-admin-configuration)
-7. [Astro Layout Integration](#7-astro-layout-integration)
-8. [Alternative HTML Integration](#8-alternative-html-integration)
-9. [CDN Configuration](#9-cdn-configuration)
-10. [Runtime Settings Flow and API Endpoints](#10-runtime-settings-flow-and-api-endpoints)
-11. [Desktop and Mobile Verification](#11-desktop-and-mobile-verification)
-12. [Troubleshooting](#12-troubleshooting)
-13. [Clean Removal and Uninstallation](#13-clean-removal-and-uninstallation)
-14. [Maintainer & Local Development Reference](#14-maintainer--local-development-reference)
+The **Accessibility Toolkit** (`v1.3.6`) provides an accessible, responsive, and lightweight accessibility toolbar for EmDash CMS websites, designed to support **WCAG 2.2 Level AA** and **ADA Section 508** compliance.
 
 ---
 
-## 1. Overview and Prerequisites
+## 1. Prerequisites
 
-The **Accessibility Toolkit** is an EmDash Registry plugin that provides website visitors with an interactive accessibility toolbar designed to assist with **WCAG 2.2 Level AA** and **ADA Section 508** accessibility needs across websites.
-
-> [!NOTE]
-> **Accessibility Scope & Standards Notice:**  
-> The Accessibility Toolkit offers user-driven client-side assistive adjustments (such as typography scaling, high-contrast modes, dyslexia-friendly fonts, and reading aids). While these tools assist individuals with disabilities and improve overall site accessibility, installing a widget does not automatically guarantee full legal or technical WCAG or ADA compliance for an entire website. Site owners remain responsible for underlying semantic HTML, ARIA landmarks, keyboard tab order, and content contrast.
-
-### Key Capabilities
-- **One-Click Accessibility Profiles**: Presets for Epilepsy Safe Mode, Visually Impaired, Cognitive Disability, and ADHD Friendly modes.
-- **Content & Typography Controls**: Font scaling up to 200%, Dyslexia-friendly typeface (`OpenDyslexic3`), letter spacing, line height, font weight adjustments, title highlighting, link highlighting, and multi-state text alignment cyclers.
-- **Color & Contrast Filters**: Dark Contrast, Light Contrast, High Contrast, High/Low Saturation, and Monochrome visual modes.
-- **Navigation & Reading Aids**: Reading Guide ruler, Large Cursor, Animation Pause, Screen Reader / Text-to-Speech page reader, and Sound Muting.
-- **Isolated Shadow DOM**: Complete stylesheet and script encapsulation prevents CSS leaks or collisions with your theme.
-- **Keyboard Navigation**: Accessible keyboard navigation with global `Option+A` / `Alt+A` shortcut.
-- **Persistent Preferences**: Visitor preferences are saved automatically in the visitor's browser `localStorage`.
-
-### Package Registry Metadata
-- **Package Slug**: `accessibility-toolkit`
-- **Publisher Handle / DID**: `@susheel-k.bsky.social` (`did:plc:pcngdskjcwsettdojdho2dtr`)
-- **Package Version**: `1.3.3`
-- **Registry Publication Status**: Currently unpublished / unlisted from the public registry (available via private/local testing and tarball package archive)
-- **Runtime Environment**: EmDash Sandboxed Plugin (`workerd` isolation) + Astro Theme Companion
-
-### Prerequisites
-Before installing the plugin, ensure your environment meets the following requirements:
-- **Node.js**: Version `18.17.0` or higher (Node 20+ recommended).
-- **EmDash Host Website**: An active EmDash CMS project configured with Astro (using `@astrojs/node`, `emdash/astro`, and `@astrojs/react` for admin previews).
-- **Administrative Access**: Access to your website's EmDash Admin panel at `/_emdash/admin`.
-- **Package Manager**: `npm`, `pnpm`, or `yarn`.
+Before installing the Accessibility Toolkit, ensure your environment meets the following requirements:
+- **EmDash CMS**: An existing EmDash website (Astro 5.x / `@emdash-cms/*`).
+- **Node.js**: Version 18.0.0 or higher.
+- **Admin Access**: Administrative credentials to your site's EmDash Admin panel (`/_emdash/admin`).
+- **Layout Access**: Ability to edit your project's base Astro layout file (`src/layouts/Base.astro` or equivalent).
 
 ---
 
-## 2. EmDash Registry Architecture & Sandbox Limitations
+## 2. Registry Installation
 
-### Security Isolation in the `workerd` Sandbox
-EmDash plugins installed from the Plugin Registry execute within a secure V8 isolate sandbox powered by Cloudflare's `workerd` runtime. By default, registry plugins operate with a zero-privilege security contract (`"capabilities": []` in [emdash-plugin.jsonc](emdash-plugin.jsonc)).
+Install the package directly into your EmDash instance:
 
-### Why Registry Installation Alone Does Not Display the Widget
-While installing the plugin activates backend routes and registers the administrative settings panel, **the floating accessibility widget will not appear on public website pages automatically**.
+### Option A: Via EmDash Admin UI (Recommended)
+1. Log in to your EmDash Admin panel (`/_emdash/admin`).
+2. In the navigation sidebar, click **Plugins** > **Registry** (`/_emdash/admin/plugins/registry`).
+3. In the search bar, type **Accessibility Toolkit**.
+4. On the Accessibility Toolkit card, click **Install**.
+5. Confirm the installation modal. EmDash downloads the signed package blob and registers the plugin.
+
+### Option B: Via EmDash CLI
+If you manage your project from the terminal, install the plugin using the EmDash CLI:
+```bash
+npx emdash plugins add accessibility-toolkit
+```
+
+---
+
+## 3. Plugin Activation
+
+1. Once installed, navigate to **Plugins** > **Plugins Manager** (`/_emdash/admin/plugins-manager`).
+2. Verify that **Accessibility Toolkit** displays an **Active** badge.
+3. The plugin is now provisioned inside EmDash's secure `workerd` isolate sandbox (`"capabilities": []`).
 
 > [!IMPORTANT]
-> **Understanding the `page:fragments` Security Enforcement:**
-> The Accessibility Toolkit defines a `page:fragments` hook in its sandboxed entrypoint ([src/plugin.ts](src/plugin.ts)). 
-> 
-> Under the EmDash Plugin Registry trust model, injecting arbitrary HTML fragments into visitor-facing pages requires the elevated `hooks.page-fragments:register` capability.
-> 
-> When running as a standard sandboxed registry plugin without this capability, the EmDash runtime intentionally skips automatic script injection:
-> ```
-> [hooks] Plugin "accessibility-toolkit" declares page:fragments hook without hooks.page-fragments:register capability — skipping
-> ```
-> This behavior protects host websites from unauthorized client-side script injection. Consequently, rendering the frontend toolbar requires either adding the companion Astro component (`<AccessibilityWidget />`) to your theme layout or including the HTML theme snippet.
+> **Why activation alone does not display the frontend widget:**  
+> In EmDash CMS, plugins installed from the Registry run inside a sandboxed worker isolate with no direct DOM write access. The `page:fragments` hook is strictly restricted to trusted host plugins (`node_modules/emdash/src/plugins/sandbox/proxy.ts:70`). This prevents untrusted third-party code from altering visitor HTML. Therefore, a simple one-time theme layout integration is required (see [Section 5](#5-frontend-integration)).
 
 ---
 
-## 3. Required Files and Asset Distribution
+## 4. Configuration (Admin Settings)
 
-### Required Distribution Files
-The frontend widget relies on production client-side bundles and font assets included with the package:
+You can customize the widget's appearance directly in EmDash Admin:
 
-| Asset File Path | Approximate Size | Role & Purpose |
-|---|---|---|
-| `vendor/accessibility-toolkit/js/widget.min.js` | ~365 kB | Production compiled accessibility engine and Shadow DOM toolbar interface. |
-| `vendor/accessibility-toolkit/js/widget.js` | ~1.1 MB | Unminified source bundle for local debugging and inspection. |
-| `vendor/accessibility-toolkit/fonts/OpenDyslexic3-Regular.woff` | ~86 kB | Web Open Font Format (WOFF) typeface for dyslexia reading mode. |
-| `vendor/accessibility-toolkit/fonts/OpenDyslexic3-Regular.ttf` | ~238 kB | TrueType font fallback for older browser environments. |
+1. In EmDash Admin, navigate to **Plugins** (`/_emdash/admin/plugins-manager`).
+2. Click **Settings** on the Accessibility Toolkit card, or navigate directly to:  
+   `/_emdash/admin/plugins/{pluginId}/settings`  
+   *(The `{pluginId}` is assigned at install time, e.g. `r_rznxjv6huupd4i7d`)*.
+3. The following settings are available:
+
+| Setting Field | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| **Enable Accessibility Widget** | Boolean | `true` | Master toggle to enable or disable the widget. |
+| **Widget Language** | Select | `English (en)` | Default interface language (12 supported languages). |
+| **Widget Colour** | String | `#1863DC` | Brand accent color for launcher button and active focus outlines. |
+| **Launcher Icon** | Select | `Default` | Icon graphic (`default`, `accessibility`, `assist`, `wheel`). |
+| **Button Size (px)** | Number | `48` | Launcher button diameter (40 = Small, 48 = Medium, 56 = Large). |
+| **Desktop Position** | Select | `bottom-right` | Corner placement on desktop (`bottom-right`, `bottom-left`, `top-right`, `top-left`). |
+| **Mobile Position** | Select | `bottom-right` | Corner placement on mobile devices. |
+| **Accessibility Statement URL** | URL | `/accessibility-statement` | Path or URL to your site's accessibility statement. |
+| **CDN Base URL** | URL | `https://cdn.jsdelivr.net/...` | Asset delivery base URL. Set to `local` for self-hosted assets. |
+
+4. Click **Save Changes**.
+
+### Standalone Mode vs. Admin Settings Synchronization
+
+| Feature / Behavior | Standalone Mode (Zero Config) | Admin Settings Synchronization (`pluginId`) |
+| :--- | :--- | :--- |
+| **Prerequisites** | None (zero configuration, zero IDs) | Assigned Registry ID (e.g. `r_rznxjv6huupd4i7d`) |
+| **Configuration Source** | Client-side defaults or layout props | Dynamic SQLite settings stored via EmDash Admin |
+| **Network Requests** | **0 requests** to EmDash backend API | **1 lightweight `fetch()`** on initial page load |
+| **Admin Enable/Disable Toggle** | **No effect** (browser never queries database) | **Respected immediately** (`enabled: false` halts loader) |
+| **Colors, Position & Statement** | Static defaults or layout props | Synced live from Admin settings form |
+| **Offline / API Downtime** | **100% immune** (no API dependency) | Gracefully falls back to standalone CDN defaults |
+| **How to Disable Widget** | Set `<AccessibilityWidget enabled={false} />` or remove snippet | Set toggle in Admin (`/_emdash/admin/plugins/{id}/settings`) |
 
 > [!NOTE]
-> **Preserved Legacy Directory Path:**  
-> The directory name `vendor/accessibility-toolkit/` is a legacy asset directory path preserved to ensure backwards compatibility with the underlying widget engine and existing deployments. Host websites must copy and maintain this directory structure under `public/vendor/accessibility-toolkit/`.
-
-### Package Exports Mapping
-The package exports defined in [package.json](package.json) provide multiple entrypoints for different integration contexts:
-
-| Export Specifier | Resolved File | Integration Context |
-|---|---|---|
-| `accessibility-toolkit` | `./dist/index.mjs` | Plugin descriptor imported into `astro.config.mjs`. |
-| `accessibility-toolkit/accessibility-widget` | `./components/AccessibilityWidget.astro` | Primary Astro companion component (recommended). |
-| `accessibility-toolkit/widget` | `./components/AccessibilityWidget.astro` | Shorthand alias for the Astro companion component. |
-| `accessibility-toolkit/coddle-access-widget` | `./components/CoddleAccessWidget.astro` | Legacy backward-compatibility alias wrapper. |
-| `accessibility-toolkit/admin` | `./admin/admin.tsx` | React admin settings canvas with interactive preview. |
-| `accessibility-toolkit/sandbox` | `./dist/plugin.mjs` | Sandboxed entrypoint for the EmDash plugin runtime. |
+> In standalone mode, toggling **Enable Accessibility Widget** to `false` in EmDash Admin will NOT hide the widget from frontend visitors because the browser never queries the database. If you want the admin toggle to control the frontend, you must pass your `pluginId`.
 
 ---
 
-## 4. Registry Installation and Plugin Activation
+## 5. Frontend Integration
 
-### Registry Status Notice
-The Accessibility Toolkit package identifier on the EmDash Plugin Registry is `@susheel-k.bsky.social/accessibility-toolkit` (publisher DID: `did:plc:pcngdskjcwsettdojdho2dtr`).
+Add the widget to your base layout file (`src/layouts/Base.astro` or equivalent) immediately before the closing `</body>` tag:
 
-> [!IMPORTANT]
-> **Publication & Installation Mode Notice:**  
-> The Accessibility Toolkit is currently **unlisted / unpublished from the public registry**. Consequently, public registry resolution (`plugins.emdashcms.com`) is not active.
-> 
-> Use **Private / Local Testing Installation** (via a local checkout path or a packaged tarball archive `.tgz`) to install and evaluate the plugin in your development environment. Public registry installation commands are documented for reference when public registry distribution is re-enabled.
-
-### Step 4.1: Install the Package
-In your EmDash website root directory (`/path/to/your-emdash-site`), install the package:
-
-```bash
-# Method A: Local testing from a repository checkout (Private / Development)
-npm install /path/to/accessibility-toolkit-repository
-
-# Method B: Packaged tarball installation (Private / Staging)
-npm install /path/to/accessibility-toolkit-1.3.3.tgz
-
-# Method C: Standard registry installation (Reference only; active when published publicly)
-npm install accessibility-toolkit
-```
-
-### Step 4.2: Register the Plugin in Astro Configuration
-Add the plugin descriptor to the `plugins` array in your site's `astro.config.mjs`:
-
-```javascript
-// astro.config.mjs
-import { defineConfig } from "astro/config";
-import node from "@astrojs/node";
-import react from "@astrojs/react";
-import emdash from "emdash/astro";
-import accessibilityToolkit from "accessibility-toolkit";
-
-export default defineConfig({
-  output: "server",
-  adapter: node({ mode: "standalone" }),
-  integrations: [
-    react(),
-    emdash({
-      plugins: [
-        accessibilityToolkit,
-      ],
-    }),
-  ],
-});
-```
-
-### Step 4.3: Activate the Plugin
-1. Start your application (`npm run dev` or `npm run build && npm start`).
-2. Log in to the EmDash Admin at `/_emdash/admin`.
-3. Navigate to **Plugins** in the administrative sidebar.
-4. Locate **Accessibility Toolkit** and verify that its status is **Active**. If deactivated, click **Activate**.
-
----
-
-## 5. Copying Vendor Assets to the Host `public/` Directory
-
-### Why Static Assets Must Be Copied to the Host
-Astro web servers only serve static assets from the host application's `public/` folder. Files installed inside `node_modules/accessibility-toolkit/vendor/` are not accessible over HTTP.
-
-If a browser requests `/vendor/accessibility-toolkit/js/widget.min.js` and the file is not in your host's `public/` directory, the server responds with **404 Not Found**.
-
-### Step 5.1: Copy Vendor Assets
-From your website root directory (`/path/to/your-emdash-site`), ensure the destination vendor directory exists and copy the bundled vendor assets into `public/vendor/`:
-
-```bash
-# Ensure target destination directory exists
-mkdir -p public/vendor
-
-# Copy the vendor assets directory (widget bundle and fonts) into public/vendor/
-cp -R node_modules/accessibility-toolkit/vendor/accessibility-toolkit public/vendor/
-```
-
-### Step 5.2: Verify Destination Structure
-Confirm the files exist at these exact paths in your host repository:
-
-```
-your-emdash-site/
-└── public/
-    └── vendor/
-        └── accessibility-toolkit/
-            ├── js/
-            │   ├── widget.min.js   <-- Essential (365 kB minified accessibility widget bundle)
-            │   └── widget.js       <-- Unminified source bundle for inspection
-            └── fonts/
-                ├── OpenDyslexic3-Regular.woff  <-- Essential (86 kB web font)
-                └── OpenDyslexic3-Regular.ttf   <-- Essential (238 kB TrueType font)
-```
-
-### Recommended: Automate in `package.json` for Clean Builds & CI/CD
-To ensure vendor assets are reliably populated across clean checkouts, `npm install` runs, dependency updates, and continuous integration (CI/CD) pipelines, configure a safe `postinstall` script in your host project's `package.json` that ensures parent directory creation before copying:
-
-```json
-{
-  "scripts": {
-    "postinstall": "mkdir -p public/vendor && cp -R node_modules/accessibility-toolkit/vendor/accessibility-toolkit public/vendor/"
-  }
-}
-```
-
-> [!TIP]
-> **Cross-Platform / CI Note:** For Windows-compatible cross-platform environments where `cp -R` may not be present in cmd.exe, tools like `copyfiles` or `shx` can also be used (e.g. `"postinstall": "shx mkdir -p public/vendor && shx cp -r node_modules/accessibility-toolkit/vendor/accessibility-toolkit public/vendor/"`).
-
----
-
-## 6. Admin Configuration
-
-Once activated, configure the widget settings to match your brand and language preferences.
-
-### Accessing Admin Settings
-1. In the EmDash Admin, navigate to **Settings** > **Accessibility Toolkit** (URL: `/_emdash/admin/plugins/accessibility-toolkit/settings`).
-2. The administration panel offers both a native **Block Kit** interface and an interactive **React canvas** with real-time live preview.
-
-### Available Settings Reference
-
-| Setting Key | Type | Default | Description |
-|---|---|---|---|
-| **Enable Accessibility Widget** (`enabled`) | `boolean` | `true` | Master switch to show or hide the widget on visitor pages. |
-| **Widget Language** (`language`) | `select` | `"en"` | Default interface language across 12 supported locales (`en`, `es`, `fr`, `de`, `it`, `pt`, `nl`, `pl`, `da`, `sv`, `no`, `fi`). |
-| **Widget Colour** (`primaryColor`) | `string` | `"#1863DC"` | Hex accent color for the floating launcher button and active toolbar states. Presets include Ocean Blue (`#1863DC`), Deep Ocean Blue (`#0369A1`), Teal (`#0D9488`), Indigo (`#4F46E5`), Emerald (`#16A34A`), and Slate Dark (`#0F172A`). |
-| **Launcher Icon** (`iconId`) | `select` | `"default"` | Icon displayed inside the button: Default (`default`), Universal Access (`accessibility`), Assist / Help (`assist`), Wheelchair (`wheel`). |
-| **Button Size** (`iconSize`) | `number` | `48` | Diameter of the floating launcher button in pixels: 40 (Small), 48 (Medium), 56 (Large). |
-| **Desktop Screen Position** (`positionDesktop`) | `select` | `"bottom-right"` | Screen quadrant on desktop displays (`bottom-right`, `bottom-left`, `top-right`, `top-left`). |
-| **Mobile Screen Position** (`positionMobile`) | `select` | `"bottom-right"` | Screen quadrant on mobile viewports (`bottom-right`, `bottom-left`, `top-right`, `top-left`). |
-| **Accessibility Statement URL** (`statementUrl`) | `string` | `"/accessibility-statement"` | Link to your organization's formal accessibility compliance policy. |
-
-3. Click **Save Settings**. Settings are saved to the EmDash database and immediately exposed through the public endpoint `GET /_emdash/api/plugins/accessibility-toolkit/config`.
-
----
-
-## 7. Astro Layout Integration
-
-### Step 7.1: Import the Component into Your Shared Layout
-In Astro themes, open your primary layout component (e.g., `src/layouts/Layout.astro` or `src/layouts/BaseLayout.astro`) and add the companion widget before the closing `</body>` tag:
-
-```astro
----
-// src/layouts/Layout.astro (or BaseLayout.astro)
-import AccessibilityWidget from "accessibility-toolkit/accessibility-widget";
-
-interface Props {
-  title?: string;
-  description?: string;
-}
-
-const { title = "Website", description = "" } = Astro.props;
----
-
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{title}</title>
-  </head>
-  <body>
-    <!-- Main page content -->
-    <slot />
-
-    <!-- 
-      Accessibility Toolkit Floating Widget Companion:
-      Automatically synchronizes with active settings saved in EmDash Admin.
-    -->
-    <AccessibilityWidget />
-  </body>
-</html>
-```
-
-### Supported Package Export Specifiers
-The package provides multiple verified export aliases in [package.json](package.json):
-- `import AccessibilityWidget from "accessibility-toolkit/accessibility-widget";` (Recommended)
-- `import AccessibilityWidget from "accessibility-toolkit/widget";` (Shorthand alias)
-- `import CoddleAccessWidget from "accessibility-toolkit/coddle-access-widget";` (Legacy backward-compatibility export retained for existing themes; aliases to `AccessibilityWidget`)
-
-### Optional Component Props Reference
-By default, `<AccessibilityWidget />` fetches active configuration from the EmDash API at runtime. You can also override any setting directly via component props:
-
-| Prop | Type | Default | Purpose |
-|---|---|---|---|
-| `pluginId` | `string` | `""` | Explicit plugin ID if using a custom registry installation prefix. |
-| `enabled` | `boolean` | `true` | Local enable/disable toggle. |
-| `language` | `string` | `"en"` | Force interface language code (e.g. `"es"`, `"fr"`). |
-| `primaryColor` | `string` | `"#1863DC"` | Force brand accent color (e.g. `"#0369A1"`). |
-| `iconId` | `"default" | "accessibility" | "assist" | "wheel"` | `"default"` | Force launcher button icon. |
-| `iconSize` | `number` | `48` | Force launcher diameter in pixels (`40`, `48`, `56`). |
-| `positionDesktop` | `"bottom-right" | "bottom-left" | "top-right" | "top-left"` | `"bottom-right"` | Force desktop placement corner. |
-| `positionMobile` | `"bottom-right" | "bottom-left" | "top-right" | "top-left"` | `"bottom-right"` | Force mobile placement corner. |
-| `statementUrl` | `string` | `""` | Force custom accessibility statement URL. |
-| `scriptSrc` | `string` | `"/vendor/accessibility-toolkit/js/widget.min.js"` | URL from which the browser loads the widget script. |
-| `cdnSrc` | `string` | `""` | Remote fallback URL if local `scriptSrc` fails or 404s. |
-| `fontsUrl` | `string` | `"/vendor/accessibility-toolkit/fonts/"` | Directory containing OpenDyslexic web fonts. |
-| `companyName` | `string` | `""` | Optional organization name for the accessibility statement module. |
-| `website` | `string` | `""` | Optional website URL for the accessibility statement module. |
-
----
-
-## 8. Alternative HTML Integration
-
-If your EmDash site uses plain HTML or custom non-Astro layouts, retrieve the ready-to-use embed snippet from the plugin API:
-
-```
-GET /_emdash/api/plugins/accessibility-toolkit/snippet
-```
-
-Add the returned dynamic loader script before the closing `</body>` tag:
+### Option A: Standalone Inline Snippet (Zero Dependencies, Recommended)
+Copy and paste this snippet directly into `src/layouts/Base.astro`:
 
 ```html
-<script>
+<!-- Accessibility Toolkit v1.3.6 — Standalone Loader -->
+<script is:inline id="accessibility-toolkit-loader">
 (function() {
-  fetch('/_emdash/api/plugins/accessibility-toolkit/config')
-    .then(function(r) { return r.json(); })
-    .then(function(res) {
-      var cfg = (res && res.data) || res;
-      if (!cfg || !cfg.enabled) return;
-      window._cyA11yConfig = {
-        primaryColor: cfg.primaryColor || '#1863DC',
-        iconId: cfg.iconId || 'default',
-        iconSize: Number(cfg.iconSize) || 48,
-        position: { desktop: cfg.positionDesktop || 'bottom-right', mobile: cfg.positionMobile || 'bottom-right' },
-        statementUrl: cfg.statementUrl || '',
-        language: { default: cfg.language || 'en' }
-      };
-      window._cyA11yAssets = { fonts: '/vendor/accessibility-toolkit/fonts/' };
-      var s = document.createElement('script');
-      s.id = 'accessibility-toolkit-script';
-      s.src = '/vendor/accessibility-toolkit/js/widget.min.js';
-      s.async = true;
-      (document.body || document.head).appendChild(s);
-    });
+  if (window.__accessibility_toolkit_initialized) return;
+  window.__accessibility_toolkit_initialized = true;
+
+  var cdn = 'https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit';
+  window._cyA11yConfig = {
+    primaryColor: '#1863DC',
+    position: { desktop: 'bottom-right', mobile: 'bottom-right' },
+    label: 'Accessibility menu'
+  };
+  window._cyA11yAssets = { fonts: cdn + '/fonts/' };
+
+  var s = document.createElement('script');
+  s.id = 'accessibility-toolkit-script';
+  s.src = cdn + '/js/widget.min.js';
+  s.integrity = 'sha384-PkHCo9yYYt43CM9mczXrTqkNN0ddgEpZos0hrTEP62/Iox7z6iWI3CfR06lzbWdK';
+  s.crossOrigin = 'anonymous';
+  s.async = true;
+  s.onerror = function() {
+    var fb = document.createElement('script');
+    fb.src = '/vendor/accessibility-toolkit/js/widget.min.js';
+    fb.async = true;
+    (document.body || document.head).appendChild(fb);
+  };
+  (document.body || document.head).appendChild(s);
 })();
 </script>
 ```
 
----
-
-## 9. CDN Configuration
-
-### Remote CDN Hosting Architecture
-If you prefer to host static assets on a remote Content Delivery Network (CDN) or external storage bucket (such as Cloudflare R2, AWS CloudFront/S3, or a dedicated asset domain) rather than copying them locally to `public/vendor/`, configure the **Custom CDN Base URL** (`cdnBaseUrl`) setting in the EmDash admin dashboard or via component props.
-
-> [!NOTE]
-> **Verified Production CDN Delivery:**  
-> The Accessibility Toolkit static assets are publicly hosted on jsdelivr Global CDN backed by the immutable Git release tag `v1.3.4`:
-> 
-> - **Production CDN Base URL:** `https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.4/vendor/accessibility-toolkit`
-> - **Production Script URL:** `https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.4/vendor/accessibility-toolkit/js/widget.min.js`
-> - **Subresource Integrity:** `integrity="sha384-PkHCo9yYYt43CM9mczXrTqkNN0ddgEpZos0hrTEP62/Iox7z6iWI3CfR06lzbWdK"`
-> - **Fonts Directory:** `https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.4/vendor/accessibility-toolkit/fonts/`
-> - **HTTP Headers:** CORS enabled (`Access-Control-Allow-Origin: *`), immutable caching (`Cache-Control: public, max-age=31536000, immutable`).
-> 
-> When using this CDN base URL, **no manual asset copying into `public/vendor/` is required** in fresh EmDash projects. Alternatively, organizations may host these assets on their own private Cloudflare R2, AWS S3/CloudFront, or custom domain using the specifications below.
-
-### Subresource Integrity (SRI) & Caching Specifications
-For production CDN deployments, serve immutable, version-pinned assets with the following verified cryptographic hashes and HTTP response headers:
-
-| Asset | Size | Recommended Cache-Control | SHA-384 Subresource Integrity (SRI) |
-|---|---|---|---|
-| `js/widget.min.js` | 365,749 B | `public, max-age=31536000, immutable` | `sha384-PkHCo9yYYt43CM9mczXrTqkNN0ddgEpZos0hrTEP62/Iox7z6iWI3CfR06lzbWdK` |
-| `fonts/OpenDyslexic3-Regular.woff` | 86,256 B | `public, max-age=31536000, immutable` | `sha384-MiQPYq3mGCq5UkuGHNOirZlE2VyLQLhd2fAr7kuXOFwK33onvxYW3t7+ENPWlfxd` |
-| `fonts/OpenDyslexic3-Regular.ttf` | 237,868 B | `public, max-age=31536000, immutable` | `sha384-Skm/Vu7sU1pZVyPURhhJMknonTyVgXUzO0qtoZhM2HUMYdJEsHzTQk1I7ocwk++I` |
-
-### Configuration via EmDash Admin Dashboard
-1. Navigate to **EmDash Admin** -> **Plugins** -> **Accessibility Toolkit** (`/_emdash/admin/plugins/accessibility-toolkit/settings`).
-2. Enter your HTTPS asset base URL in **Custom CDN Base URL**, e.g.:
-   `https://cdn.example.com/accessibility-toolkit/v1.3.4`
-3. Click **Save Settings**.
-4. Both `<AccessibilityWidget />` and the generated `/snippet` dynamic loader will automatically load `widget.min.js` and fonts from your CDN with SRI verification and fallback.
-
-### Manual Component Configuration Example
-You can also override the CDN URL directly on the Astro component:
+### Option B: Native Astro Companion Component
+If you have the package installed in your project repository (`npm install accessibility-toolkit`):
 
 ```astro
-<AccessibilityWidget
-  cdnSrc="https://cdn.example.com/accessibility-toolkit/v1.3.4/js/widget.min.js"
-  fontsUrl="https://cdn.example.com/accessibility-toolkit/v1.3.4/fonts/"
-  integrity="sha384-PkHCo9yYYt43CM9mczXrTqkNN0ddgEpZos0hrTEP62/Iox7z6iWI3CfR06lzbWdK"
-/>
+---
+// src/layouts/Base.astro
+import AccessibilityWidget from "accessibility-toolkit/accessibility-widget";
+---
+<html>
+  <body>
+    <slot />
+    <!-- Standalone zero-config mode: loads from canonical CDN -->
+    <AccessibilityWidget />
+
+    <!-- Or provide optional pluginId to sync settings from EmDash Admin -->
+    <!-- <AccessibilityWidget pluginId="r_rznxjv6huupd4i7d" /> -->
+  </body>
+</html>
 ```
 
-### Automatic Dual-Tier Fallback
-When a CDN URL is configured (`cdnSrc` or `cdnBaseUrl`), the loader attempts to fetch from the remote CDN first. If the CDN request fails (network error, HTTP 404, or ad-blocker), the `script.onerror` handler triggers a seamless failover to the local asset path (`/vendor/accessibility-toolkit/js/widget.min.js`). If both fail, a diagnostic warning is logged without crashing the host page.
+### Companion Component Props Reference
+All props are completely optional:
+
+| Prop | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `pluginId` | `string` | `""` | Optional Registry ID (e.g. `r_...`) to sync admin settings. |
+| `enabled` | `boolean` | `true` | Master toggle to enable or disable the widget directly in code. |
+| `primaryColor` | `string` | `"#1863DC"` | Primary accent hex color for launcher button and active rings. |
+| `iconId` | `"default" \| "accessibility" \| "assist" \| "wheel"` | `"default"` | Launcher button icon graphic. |
+| `iconSize` | `number` | `48` | Launcher button diameter in pixels. |
+| `positionDesktop` | `"bottom-right" \| "bottom-left" \| "top-right" \| "top-left"` | `"bottom-right"` | Screen position on desktop. |
+| `positionMobile` | `"bottom-right" \| "bottom-left" \| "top-right" \| "top-left"` | `"bottom-right"` | Screen position on mobile. |
+| `statementUrl` | `string` | `""` | Accessibility statement page link. |
+| `cdnBaseUrl` | `string` | `https://cdn.jsdelivr.net/...` | Base URL for CDN asset loading. |
+| `scriptSrc` | `string` | `"/vendor/accessibility-toolkit/js/widget.min.js"` | Fallback JavaScript path. |
+| `fontsUrl` | `string` | `""` | Directory URL for Dyslexia font assets. |
+| `integrity` | `string` | `sha384-PkHCo9yYYt43...` | Cryptographic Subresource Integrity hash. |
 
 ---
 
-## 10. Runtime Settings Flow and API Endpoints
+## 6. Asset Setup (CDN vs. Offline Environments)
 
-### Data Flow Architecture
-The plugin uses a clean decoupled architecture between settings persistence, API delivery, and frontend rendering:
+### Default Delivery: High-Performance Zero-Copy CDN
+By default, the Accessibility Toolkit requires **zero file copying**. All scripts and fonts are served from the production jsDelivr CDN backed by immutable tag `v1.3.6`:
 
-1. **Administration**: Site administrator modifies settings in EmDash Admin (`/_emdash/admin/plugins/accessibility-toolkit/settings`).
-2. **Persistence**: Submission posts to `POST /_emdash/api/plugins/accessibility-toolkit/admin`, which validates inputs and writes them to the EmDash database.
-3. **API Delivery**: The plugin exposes active settings through the public JSON endpoint `GET /_emdash/api/plugins/accessibility-toolkit/config`.
-4. **Widget Initialization**: On visitor pages, `<AccessibilityWidget />` fetches the configuration, sets `window._cyA11yConfig` and `window._cyA11yAssets`, and dynamically loads `widget.min.js`.
-5. **Visitor Persistence**: Visitor-selected accessibility adjustments (such as font scaling or contrast filters) are saved in the visitor's browser `localStorage`.
+| Asset | Production CDN URL | Local Fallback Path |
+| :--- | :--- | :--- |
+| **Widget JavaScript** | `https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/js/widget.min.js` | `/vendor/accessibility-toolkit/js/widget.min.js` |
+| **Dyslexia Font (WOFF)** | `https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/fonts/OpenDyslexic3-Regular.woff` | `/vendor/accessibility-toolkit/fonts/OpenDyslexic3-Regular.woff` |
+| **Dyslexia Font (TTF)** | `https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/fonts/OpenDyslexic3-Regular.ttf` | `/vendor/accessibility-toolkit/fonts/OpenDyslexic3-Regular.ttf` |
+| **SRI Hash** | `sha384-PkHCo9yYYt43CM9mczXrTqkNN0ddgEpZos0hrTEP62/Iox7z6iWI3CfR06lzbWdK` | *(Not applied in local mode)* |
 
-### Available API Endpoints
+### Offline / Intranet / Firewall Environments
+If your website operates in an offline, air-gapped, or firewall-restricted environment where `cdn.jsdelivr.net` is unreachable, copy the vendor assets into your project's `public/` directory:
 
-| Method | Endpoint | Access | Response Format | Purpose |
-|---|---|---|---|---|
-| `GET` | `/_emdash/api/plugins/accessibility-toolkit/config` | Public | JSON (`Cache-Control: no-store, private`) | Returns current widget configuration. |
-| `GET` | `/_emdash/api/plugins/accessibility-toolkit/snippet` | Public | JSON (`Cache-Control: no-store, private`) | Returns ready-to-use HTML and script embed snippets. |
-| `GET` | `/_emdash/api/plugins/accessibility-toolkit/status` | Public | JSON (`Cache-Control: no-store, private`) | Health check returning plugin status, version, and metadata. |
-| `POST` | `/_emdash/api/plugins/accessibility-toolkit/admin` | Admin | JSON | Validates and persists configuration updates from the admin form. |
-
-### Example API Response (`config`)
-```json
-{
-  "success": true,
-  "data": {
-    "enabled": true,
-    "language": "en",
-    "primaryColor": "#1863DC",
-    "iconId": "default",
-    "iconSize": 48,
-    "positionDesktop": "bottom-right",
-    "positionMobile": "bottom-right",
-    "statementUrl": "/accessibility-statement",
-    "version": "1.3.3",
-    "toolkit": "Accessibility Toolkit",
-    "publisher": "EmDash Community"
-  }
-}
-```
-
----
-
-## 11. Desktop and Mobile Verification
-
-Perform these verification checks to confirm that the plugin is working correctly:
-
-### Step 11.1: Command-Line HTTP Verification
-Verify that your server delivers HTML, scripts, fonts, and API responses:
-
-```bash
-# 1. Verify frontend page renders HTML (HTTP 200)
-curl -sI http://localhost:4321/ | grep -E "HTTP/|content-type:"
-
-# 2. Verify widget JavaScript is served without 404 (HTTP 200, ~365 kB)
-curl -sI http://localhost:4321/vendor/accessibility-toolkit/js/widget.min.js | grep -E "HTTP/|content-length:"
-
-# 3. Verify OpenDyslexic font is served without 404 (HTTP 200, ~86 kB)
-curl -sI http://localhost:4321/vendor/accessibility-toolkit/fonts/OpenDyslexic3-Regular.woff | grep -E "HTTP/|content-length:"
-
-# 4. Verify settings API endpoint returns JSON
-curl -s http://localhost:4321/_emdash/api/plugins/accessibility-toolkit/config
-```
-
-### Step 11.2: Desktop Browser Verification
-1. Open your website in Chrome, Firefox, Safari, or Edge.
-2. Verify that the floating circular launcher button appears in the configured screen quadrant (default: bottom-right).
-3. Press **Alt + A** (or **Option + A** on macOS):
-   - The accessibility menu modal should open centered on the screen.
-4. Test functional controls:
-   - **Font Size (+)**: Click to scale body text up to 200%.
-   - **Dyslexia Font**: Click to toggle the `OpenDyslexic3` typeface.
-   - **Color Modes**: Click **Dark Contrast**, **High Contrast**, or **Monochrome** to verify visual adjustments.
-   - **Reading Guide**: Move cursor across the screen and verify the horizontal tracking focus bar.
-   - **Reset**: Click **Reset all accessibility settings to default** to restore normal styles.
-
-### Step 11.3: Mobile Device Verification
-1. Open DevTools and switch to responsive device emulation (viewport width `< 480px`).
-2. Verify:
-   - The launcher button remains visible with a minimum `40px` touch target.
-   - Opening the menu presents a responsive drawer without horizontal scroll leakage.
-   - Pinch-zoom and touch interactions remain smooth.
-
----
-
-## 12. Troubleshooting
-
-### Problem 1: Floating launcher button does not appear on visitor pages
-- **Check Master Toggle:** In EmDash Admin > **Settings** > **Accessibility Toolkit**, verify **Enable Accessibility Widget** is checked. If unchecked, the API returns `"enabled": false` and the loader halts immediately.
-- **Check Layout Inclusion:** Confirm that `<AccessibilityWidget />` is imported and included inside the active layout file for that route.
-- **Check DevTools Console:** Open browser console (F12) and inspect for network errors or unhandled script exceptions.
-
-### Problem 2: Browser console shows `GET /vendor/accessibility-toolkit/js/widget.min.js 404 (Not Found)`
-- **Cause:** Vendor assets have not been copied into your host site's `public/` folder.
-- **Solution:** Run:
-  ```bash
-  mkdir -p public/vendor
-  cp -R node_modules/accessibility-toolkit/vendor/accessibility-toolkit public/vendor/
-  ```
-  Ensure `public/vendor/accessibility-toolkit/js/widget.min.js` exists.
-
-### Problem 3: Dyslexia font does not render or console shows font 404
-- **Cause:** Font files are missing from `public/vendor/accessibility-toolkit/fonts/`.
-- **Solution:** Verify the font assets exist in your host directory:
-  ```bash
-  ls -lh public/vendor/accessibility-toolkit/fonts/
-  # Expected: OpenDyslexic3-Regular.woff (86 kB) and OpenDyslexic3-Regular.ttf (238 kB)
-  ```
-
-### Problem 4: Settings saved in Admin do not update on the frontend
-- **Cause:** Browser caching or reverse-proxy caching of the configuration endpoint, or browser `localStorage` overriding defaults.
-- **Solution:**
-  1. The API endpoint returns `Cache-Control: no-store, private`. If using Cloudflare or Nginx, bypass caching for `/_emdash/api/*`.
-  2. Clear browser `localStorage` for your site domain; the widget preserves visitor adjustments locally once selected.
-
-### Problem 5: Server log: `[hooks] Plugin declares page:fragments hook without capability — skipping`
-- **Explanation:** This is expected and normal for sandboxed registry plugins under EmDash security enforcement. It confirms that the Astro companion component (`<AccessibilityWidget />`) is required to render the frontend widget.
-
----
-
-## 13. Clean Removal and Uninstallation
-
-### Updating to Future Releases
-When updating the package:
-1. Update the dependency in `package.json`:
+1. Install the package locally:
    ```bash
-   npm update accessibility-toolkit
+   npm install accessibility-toolkit
    ```
-2. Re-synchronize static vendor assets:
+2. Copy the vendor folder to your site's `public/` directory:
    ```bash
+   mkdir -p public/vendor
    cp -R node_modules/accessibility-toolkit/vendor/accessibility-toolkit public/vendor/
    ```
-3. Restart your server and verify changes in the admin panel.
-
-### Clean Removal / Uninstallation
-To completely remove the Accessibility Toolkit without leaving orphaned files:
-1. **Remove Layout Component:** Remove `<AccessibilityWidget />` and its import statement from your layout files (`src/layouts/*.astro`).
-2. **Remove Static Assets:**
-   ```bash
-   rm -rf public/vendor/accessibility-toolkit
-   ```
-3. **Remove from Astro Configuration:** Remove `accessibilityToolkit` from `plugins` in `astro.config.mjs`.
-4. **Uninstall npm Package:**
-   ```bash
-   npm uninstall accessibility-toolkit
-   ```
-5. **Deactivate in EmDash Admin:** Navigate to **Plugins** in the EmDash Admin and click **Deactivate** / **Uninstall** to clean up database state.
+3. Verify that the files exist:
+   - `public/vendor/accessibility-toolkit/js/widget.min.js`
+   - `public/vendor/accessibility-toolkit/fonts/OpenDyslexic3-Regular.woff`
+   - `public/vendor/accessibility-toolkit/fonts/OpenDyslexic3-Regular.ttf`
+4. Test by opening `http://localhost:4321/vendor/accessibility-toolkit/js/widget.min.js` in your browser to verify it returns HTTP 200.
 
 ---
 
-## 14. Maintainer & Local Development Reference
+## 7. Verification Checklist
 
-This section is intended for contributors developing and validating the plugin repository itself.
+After adding the widget to your layout, verify the installation with this 5-point checklist:
 
-### Maintainer Workspace Environment
-- **Local Repository Path:** `/Applications/XAMPP/xamppfiles/htdocs/coddle-accessibility-plugin`
-- **Node.js Environment:** Node 18+ / npm 11+
+1. [ ] **Floating Launcher Visible**: Open `http://localhost:4321/` in your browser. A circular blue button with an accessibility icon appears in the bottom-right corner.
+2. [ ] **Panel Opens on Click**: Click the launcher button. The accessibility dialog opens smoothly, displaying 35 accessibility tools and presets.
+3. [ ] **Tools Apply Immediately**: Click **Dark Contrast** or **Dyslexia Font**. The page appearance changes immediately.
+4. [ ] **Console Clean**: Open DevTools Console (`F12` or `Cmd+Option+I`). Confirm there are zero unhandled exceptions or error messages.
+5. [ ] **Preferences Persist**: Reload the page. Preferences remain active, and the launcher remains responsive.
 
-### Key Repository Files
-- [package.json](package.json): Package exports, files array, dependencies, and build scripts.
-- [emdash-plugin.jsonc](emdash-plugin.jsonc): Plugin manifest, settings schema, capabilities contract, and author metadata.
-- [src/plugin.ts](src/plugin.ts): Sandboxed plugin implementation, lifecycle hooks, API routes, and Block Kit admin builder.
-- [admin/admin.tsx](admin/admin.tsx): React administrative settings component with live preview canvas.
-- [components/AccessibilityWidget.astro](components/AccessibilityWidget.astro): Primary Astro companion component.
-- [components/CoddleAccessWidget.astro](components/CoddleAccessWidget.astro): Legacy backward-compatibility wrapper.
-- [tests/plugin.test.mjs](tests/plugin.test.mjs): Test suite verifying manifests, schemas, routes, Block Kit, hooks, and Astro props.
+---
 
-### Maintainer Build & Validation Commands
-Run these commands from the repository root:
+## 8. Troubleshooting
 
-```bash
-# 1. Typecheck TypeScript sources
-npm run typecheck
+For in-depth diagnostics, see the dedicated [Troubleshooting Guide](TROUBLESHOOTING.md).
 
-# 2. Run automated test suite (15 unit tests)
-npm test
+### Issue 1: Floating button does not appear on public pages
+- **Cause**: The snippet or `<AccessibilityWidget />` was not added to your shared layout.
+- **Fix**: Open `src/layouts/Base.astro` and verify the script snippet is pasted immediately before `</body>`.
 
-# 3. Validate plugin manifest against EmDash schema
-npm run validate
+### Issue 2: "Plugin endpoint unreachable" warning in console
+- **Cause**: A custom `pluginId` was specified, but that ID is not installed on the current EmDash database.
+- **Fix**: Either remove `pluginId` to run in standalone mode, or verify your assigned ID in `/_emdash/admin/plugins-manager`. The widget automatically falls back to standalone mode regardless.
 
-# 4. Build distribution artifacts into dist/
-npm run build
+### Issue 3: Content Security Policy (CSP) blocks CDN script or inline loader
+- **Cause**: Strict `script-src` or `font-src` CSP header blocking `cdn.jsdelivr.net` or inline scripts.
+- **Fix**:
+  1. Add `https://cdn.jsdelivr.net` to your `script-src` and `font-src` directives.
+  2. For the inline loader script, authorize its exact SHA-256 hash (`'sha256-71Kaxjn+TeHAcKrwm3BhOCgydP+xypwygjM7fAHHheI='`) or use a per-request nonce (`nonce="..."`). Avoid using `'unsafe-inline'` in production CSP headers.
+  3. Alternatively, use local vendor assets: copy the files to `public/vendor/accessibility-toolkit/` and pass `cdnBaseUrl="local"`. See the [Troubleshooting Guide](TROUBLESHOOTING.md#2-cdn-javascript-fails-to-load) for complete CSP examples.
 
-# 5. Verify packaging contents and exclusions
-npm pack --dry-run
-```
-
-### Testing with the Isolated Test Instance
-The repository contains a minimal Astro + EmDash test instance in `test-instance/`:
-
-```bash
-# Build the test instance
-npx astro build --root test-instance
-
-# Run the test instance server on port 4322
-PORT=4322 node test-instance/dist/server/entry.mjs
-```
+### Issue 4: Dyslexia font not loading
+- **Cause**: Font asset path blocked or not configured.
+- **Fix**: Ensure `https://cdn.jsdelivr.net` is allowed for font loading, or ensure `OpenDyslexic3-Regular.woff` exists in `public/vendor/accessibility-toolkit/fonts/`.

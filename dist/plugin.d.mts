@@ -2,6 +2,36 @@ import { SandboxedPlugin } from "emdash/plugin";
 
 //#region src/plugin.d.ts
 declare const WIDGET_SRI_HASH = "sha384-PkHCo9yYYt43CM9mczXrTqkNN0ddgEpZos0hrTEP62/Iox7z6iWI3CfR06lzbWdK";
+declare const CANONICAL_CDN_BASE_URL = "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/";
+declare const DEFAULT_CDN_BASE_URL = "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/";
+declare const LOCAL_WIDGET_SCRIPT_PATH = "/vendor/accessibility-toolkit/js/widget.min.js";
+declare const LOCAL_FONTS_PATH = "/vendor/accessibility-toolkit/fonts/";
+declare const LEGACY_LOCAL_WIDGET_SCRIPT_PATH = "/vendor/coddle-access/js/widget.min.js";
+/**
+ * Sanitizes and normalizes a CDN base URL.
+ * - Strips tracking query parameters (e.g. ?utm_source=chatgpt.com) and hash fragments.
+ * - Strips accidental file suffixes (/js/widget.min.js, /js/widget.js, /js, /fonts, /fonts/).
+ * - Strips trailing slashes.
+ * - Migrates obsolete repository URLs (coddle-accessibility, coddle-access, @v1.3.4, @v1.3.5) to the canonical CDN base URL.
+ * - Resolves "default" to CANONICAL_CDN_BASE_URL.
+ * - Resolves "local" or "none" to empty string (local mode).
+ * - Rejects non-HTTPS or malformed URLs, returning empty string.
+ */
+declare function sanitizeCdnBaseUrl(val: unknown): string;
+interface EffectiveCdnConfig {
+  cdnConfigured: boolean;
+  mode: "cdn" | "local";
+  cdnBaseUrl: string;
+  scriptUrl: string;
+  fontsUrl: string;
+  sri: string;
+}
+/**
+ * Resolves effective CDN configuration from saved cdnBaseUrl setting.
+ * When cdnBaseUrl resolves to an HTTPS URL, returns mode: "cdn" with canonical asset paths.
+ * When cdnBaseUrl is empty, "local", or invalid, returns mode: "local" with local vendor asset paths.
+ */
+declare function resolveCdnConfig(cdnBaseUrlSetting: unknown): EffectiveCdnConfig;
 interface AccessibilityToolkitSettings {
   enabled: boolean;
   language: string;
@@ -36,6 +66,7 @@ declare const PRESET_COLORS: {
   hex: string;
   label: string;
 }[];
+declare function normalizeBoolean(val: unknown, fallback?: boolean): boolean;
 declare function toValid7CharHex(val: string): string;
 declare function normalizeIconId(val: unknown): "default" | "accessibility" | "assist" | "wheel";
 declare function normalizePosition(val: unknown): "bottom-right" | "bottom-left" | "top-right" | "top-left";
@@ -186,11 +217,11 @@ declare function renderAdminBlocks(settings: AccessibilityToolkitSettings, previ
 /**
  * Accessibility Toolkit - Sandboxed EmDash Plugin Entrypoint
  *
- * Runs securely inside EmDash's workerd sandbox.
+ * Runs securely inside EmDash workerd sandbox.
  * Provides custom Block Kit admin interface at /_emdash/admin/plugins/$id/settings,
  * declarative settings schema for the plugin manager,
  * and public HTTP endpoints for widget configuration and embedding.
  */
 declare const plugin: SandboxedPlugin;
 //#endregion
-export { AccessibilityToolkitSettings, CoddleAccessSettings, DEFAULT_SETTINGS, ICONS, POSITIONS, PRESET_COLORS, SIZES, SUPPORTED_LANGUAGES, WIDGET_SRI_HASH, blocks, plugin as default, elements, normalizeIconId, normalizePosition, renderAdminBlocks, toValid7CharHex };
+export { AccessibilityToolkitSettings, CANONICAL_CDN_BASE_URL, CoddleAccessSettings, DEFAULT_CDN_BASE_URL, DEFAULT_SETTINGS, EffectiveCdnConfig, ICONS, LEGACY_LOCAL_WIDGET_SCRIPT_PATH, LOCAL_FONTS_PATH, LOCAL_WIDGET_SCRIPT_PATH, POSITIONS, PRESET_COLORS, SIZES, SUPPORTED_LANGUAGES, WIDGET_SRI_HASH, blocks, plugin as default, elements, normalizeBoolean, normalizeIconId, normalizePosition, renderAdminBlocks, resolveCdnConfig, sanitizeCdnBaseUrl, toValid7CharHex };

@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.3.6] - 2026-10-23
+
+### Added
+- Added comprehensive `TROUBLESHOOTING.md` integration and diagnostic guide.
+- Added test coverage for canonical CDN URL sanitization, SRI verification, and dual-tier fallback resilience.
+
+### Changed
+- Updated canonical CDN base URL to point to immutable jsdelivr release tag `v1.3.6` (`vendor/accessibility-toolkit/`).
+- Standardized documentation across `README.md`, `REGISTRY-INSTALLATION.md`, and `docs/description.md` with zero-copy CDN setup instructions.
+
+### Fixed
+- Fixed CDN base URL sanitization to strip tracking query parameters, normalize file suffixes, and migrate legacy paths to the canonical `v1.3.6` repository.
+
 ## [1.3.5] - 2026-10-22
 
 ### Fixed

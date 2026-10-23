@@ -10,6 +10,7 @@ export interface AccessibilityToolkitSettings {
   positionDesktop: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
   positionMobile: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
   statementUrl: string;
+  cdnBaseUrl?: string;
 }
 
 export type CoddleAccessSettings = AccessibilityToolkitSettings;
@@ -24,6 +25,7 @@ export const DEFAULT_SETTINGS: AccessibilityToolkitSettings = {
   positionDesktop: 'bottom-right',
   positionMobile: 'bottom-right',
   statementUrl: '/accessibility-statement',
+  cdnBaseUrl: 'https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/',
 };
 
 export function getPluginCandidateIds(): string[] {
@@ -123,6 +125,7 @@ export function AccessibilityToolkitAdminPage() {
   const [positionDesktop, setPositionDesktop] = useState<'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'>(DEFAULT_SETTINGS.positionDesktop);
   const [positionMobile, setPositionMobile] = useState<'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'>(DEFAULT_SETTINGS.positionMobile);
   const [statementUrl, setStatementUrl] = useState<string>(DEFAULT_SETTINGS.statementUrl);
+  const [cdnBaseUrl, setCdnBaseUrl] = useState<string>(DEFAULT_SETTINGS.cdnBaseUrl || '');
 
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
@@ -214,6 +217,7 @@ export function AccessibilityToolkitAdminPage() {
           setPositionMobile(data.positionMobile as any);
         }
         if (typeof data.statementUrl === 'string') setStatementUrl(data.statementUrl);
+          if (typeof data.cdnBaseUrl === 'string') setCdnBaseUrl(data.cdnBaseUrl);
       }
     } catch (err: any) {
       setError(err?.message || "Failed to load Accessibility settings.");
@@ -254,6 +258,16 @@ export function AccessibilityToolkitAdminPage() {
         }
       }
 
+      // Validate CDN Base URL if present
+      const cleanCdn = cdnBaseUrl.trim();
+      if (cleanCdn && cleanCdn.toLowerCase() !== "local" && cleanCdn.toLowerCase() !== "default") {
+        if (!cleanCdn.startsWith("https://")) {
+          setError("CDN Base URL must be a valid HTTPS URL (e.g. https://your-cdn.example.com/assets) or 'default'.");
+          setSaving(false);
+          return;
+        }
+      }
+
       // Validate hex color
       const cleanColor = primaryColor.trim();
       if (!/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(cleanColor)) {
@@ -272,6 +286,7 @@ export function AccessibilityToolkitAdminPage() {
         positionDesktop,
         positionMobile,
         statementUrl: statementUrl.trim(),
+        cdnBaseUrl: cdnBaseUrl.trim(),
       };
 
       let success = false;
@@ -1170,7 +1185,44 @@ export function AccessibilityToolkitAdminPage() {
               )}
             </div>
 
-            {/* 6. Accessibility Statement URL Card */}
+                        {/* 6. CDN Base URL Card */}
+            <div
+              style={{
+                background: "#ffffff",
+                border: "1px solid #e2e8f0",
+                borderRadius: "12px",
+                padding: "1.75rem",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+              }}
+            >
+              <label htmlFor="accessiyes-cdn-base-url" style={{ display: "block", fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", marginBottom: "0.4rem" }}>
+                CDN Base URL (Optional)
+              </label>
+              <p style={{ fontSize: "0.9rem", color: "#64748b", margin: "0 0 1rem 0" }}>
+                Optional HTTPS CDN base URL hosting widget.min.js and fonts (defaults to official jsdelivr CDN). Set to &apos;local&apos; or leave empty to serve local vendor assets.
+              </p>
+
+              <input
+                type="text"
+                id="accessiyes-cdn-base-url"
+                placeholder="https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/"
+                value={cdnBaseUrl}
+                onChange={(e) => setCdnBaseUrl(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "0.75rem 1rem",
+                  fontSize: "0.95rem",
+                  borderRadius: "8px",
+                  border: "1.5px solid #cbd5e1",
+                  background: "#ffffff",
+                  color: "#0f172a",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
+
+            {/* 7. Accessibility Statement URL Card */}
             <div
               style={{
                 background: "#ffffff",

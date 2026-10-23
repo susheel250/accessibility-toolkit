@@ -7,7 +7,7 @@
 /** @type {import("emdash").PluginDescriptor} */
 const descriptor = Object.freeze({
 	"id": "accessibility-toolkit",
-	"version": "1.3.5",
+	"version": "1.3.6",
 	"format": "standard",
 	"entrypoint": "accessibility-toolkit/sandbox",
 	"capabilities": [],
@@ -206,10 +206,10 @@ const descriptor = Object.freeze({
 			"default": "bottom-right"
 		},
 		"cdnBaseUrl": {
-			"label": "Custom CDN Base URL",
-			"description": "Optional HTTPS CDN base URL hosting widget.min.js and fonts (e.g. https://your-cdn.example.com/assets). When configured, the widget loads from this CDN with local fallback.",
+			"label": "CDN Base URL",
+			"description": "Optional HTTPS CDN base URL hosting widget.min.js and fonts (defaults to https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit). Set to 'local' or leave empty to serve local assets.",
 			"type": "string",
-			"default": ""
+			"default": "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/"
 		},
 		"statementUrl": {
 			"label": "Accessibility Statement URL",

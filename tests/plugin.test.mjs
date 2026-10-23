@@ -1,3 +1,4 @@
+import vm from "node:vm";
 import crypto from "node:crypto";
 function awaitImportCrypto() { return crypto; }
 import { test, describe } from "node:test";
@@ -6,6 +7,11 @@ import { validateBlockResponse } from "@emdash-cms/blocks/server";
 import fs from "node:fs";
 import path from "node:path";
 import plugin, {
+	WIDGET_SRI_HASH,
+	CANONICAL_CDN_BASE_URL,
+	DEFAULT_CDN_BASE_URL,
+	sanitizeCdnBaseUrl,
+	resolveCdnConfig,
 	DEFAULT_SETTINGS,
 	SUPPORTED_LANGUAGES,
 	ICONS,
@@ -54,7 +60,7 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 		const manifest = JSON.parse(jsonClean);
 
 		assert.equal(manifest.slug, "accessibility-toolkit");
-		assert.equal(manifest.version, "1.3.5");
+		assert.equal(manifest.version, "1.3.6");
 		assert.equal(manifest.license, "MIT");
 		assert.equal(manifest.name, "Accessibility Toolkit");
 		assert.ok(manifest.publisher.startsWith("did:plc:"));
@@ -80,6 +86,7 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 			"iconSize",
 			"positionDesktop",
 			"positionMobile",
+			"cdnBaseUrl",
 			"statementUrl",
 		];
 		for (const key of expectedKeys) {
@@ -256,63 +263,392 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 		assert.equal(result.positionDesktop, "bottom-right");
 		assert.equal(result.positionMobile, "bottom-right");
 		assert.equal(result.language, "en");
-		assert.equal(result.version, "1.3.5");
+		assert.equal(result.version, "1.3.6");
 		assert.equal(result.toolkit, "Accessibility Toolkit");
 	});
 
-	test("snippet route returns HTML embed tags reflecting saved settings in local mode", async () => {
+	test("snippet and config routes handle default CDN configuration with canonical asset URLs", async () => {
 		assert.ok(plugin.routes.snippet);
 		assert.equal(plugin.routes.snippet.public, true);
 
-		const mockCtx = createMockCtx({
-			primaryColor: "#0D9488",
-			positionDesktop: "bottom-left",
-			language: "fr",
+		// 1. Fresh install without cdnBaseUrl override uses canonical production CDN
+		const freshCtx = createMockCtx({
+			primaryColor: "#1863DC",
+			positionDesktop: "bottom-right",
+			language: "en",
 		});
 
-		const result = await plugin.routes.snippet.handler({}, mockCtx);
-		assert.equal(result.enabled, true);
-		assert.equal(result.mode, "local");
-		assert.equal(result.cdnConfigured, false);
-		assert.equal(result.cdnHtml, null);
-		assert.ok(result.sri.startsWith("sha384-"));
-		assert.ok(result.html.includes("data-color=\"#0D9488\""));
-		assert.ok(result.html.includes("data-position=\"bottom-left\""));
-		assert.ok(result.html.includes("data-lang=\"fr\""));
-		assert.ok(result.dynamicLoader.includes(`fetch('/_emdash/api/plugins/${mockCtx.plugin.id}/config')`));
-		assert.ok(result.dynamicLoader.includes("window.__accessibility_toolkit_initialized"));
+		const freshSnippet = await plugin.routes.snippet.handler({}, freshCtx);
+		assert.equal(freshSnippet.enabled, true);
+		assert.equal(freshSnippet.mode, "cdn");
+		assert.equal(freshSnippet.cdnConfigured, true);
+		assert.equal(freshSnippet.cdnBaseUrl, CANONICAL_CDN_BASE_URL);
+		assert.equal(freshSnippet.scriptUrl, "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/js/widget.min.js");
+		assert.equal(freshSnippet.fontsUrl, "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/fonts/");
+		assert.equal(freshSnippet.sri, WIDGET_SRI_HASH);
+
+		// Verified HTML and cdnHtml agreement
+		assert.ok(freshSnippet.cdnHtml);
+		assert.ok(freshSnippet.cdnHtml.includes(`src="https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/js/widget.min.js"`));
+		assert.ok(freshSnippet.cdnHtml.includes(`integrity="${WIDGET_SRI_HASH}"`));
+		assert.ok(freshSnippet.cdnHtml.includes('crossorigin="anonymous"'));
+		assert.equal(freshSnippet.html, freshSnippet.cdnHtml, "html and cdnHtml must agree when CDN is configured");
+
+		// Verified dynamic loader output
+		assert.ok(freshSnippet.dynamicLoader.includes('/_emdash/api/plugins/') && freshSnippet.dynamicLoader.includes('/config'));
+		assert.ok(freshSnippet.dynamicLoader.includes("window.__accessibility_toolkit_initialized"));
+		assert.ok(freshSnippet.dynamicLoader.includes('label: "Accessibility menu"'));
+		assert.ok(!freshSnippet.dynamicLoader.includes("/vendor/coddle-access/"), "Legacy coddle path must not appear in loader");
+		assert.ok(!freshSnippet.dynamicLoader.includes("utm_source"), "No tracking query parameters in loader");
+
+		// 2. Explicit 'default' keyword also resolves to canonical CDN
+		const defaultCtx = createMockCtx({ cdnBaseUrl: "default" });
+		const defaultSnippet = await plugin.routes.snippet.handler({}, defaultCtx);
+		assert.equal(defaultSnippet.mode, "cdn");
+		assert.equal(defaultSnippet.cdnConfigured, true);
+		assert.equal(defaultSnippet.cdnBaseUrl, CANONICAL_CDN_BASE_URL);
+		assert.equal(defaultSnippet.scriptUrl, "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/js/widget.min.js");
+		assert.equal(defaultSnippet.fontsUrl, "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/fonts/");
 	});
 
-	test("snippet route generates versioned CDN URLs with SRI attributes when CDN is configured", async () => {
+	test("snippet route generates clean versioned CDN URLs with SRI attributes for custom CDN configuration", async () => {
 		const mockCtx = createMockCtx({
 			primaryColor: "#1863DC",
 			positionDesktop: "bottom-right",
 			language: "en",
-			cdnBaseUrl: "https://cdn.example.com/accessibility-toolkit/v1.3.4",
+			cdnBaseUrl: "https://cdn.example.com/accessibility-toolkit/v1.3.6",
 		});
 
 		const result = await plugin.routes.snippet.handler({}, mockCtx);
 		assert.equal(result.enabled, true);
 		assert.equal(result.mode, "cdn");
 		assert.equal(result.cdnConfigured, true);
+		assert.equal(result.cdnBaseUrl, "https://cdn.example.com/accessibility-toolkit/v1.3.6/");
+		assert.equal(result.scriptUrl, "https://cdn.example.com/accessibility-toolkit/v1.3.6/js/widget.min.js");
+		assert.equal(result.fontsUrl, "https://cdn.example.com/accessibility-toolkit/v1.3.6/fonts/");
 		assert.ok(result.cdnHtml);
-		assert.ok(result.cdnHtml.includes("https://cdn.example.com/accessibility-toolkit/v1.3.4/js/widget.min.js"));
-		assert.ok(result.cdnHtml.includes('integrity="sha384-'));
+		assert.ok(result.cdnHtml.includes("https://cdn.example.com/accessibility-toolkit/v1.3.6/js/widget.min.js"));
+		assert.ok(result.cdnHtml.includes(`integrity="${WIDGET_SRI_HASH}"`));
 		assert.ok(result.cdnHtml.includes('crossorigin="anonymous"'));
+		assert.equal(result.html, result.cdnHtml);
+	});
+
+	test("CDN configuration sanitizes malformed query strings, file suffixes, and obsolete repository URLs", async () => {
+		// 1. Obsolete repository URL with tracking parameter and full file path
+		const dirtyCtx = createMockCtx({
+			cdnBaseUrl: "https://cdn.jsdelivr.net/gh/susheel250/coddle-accessibility@v1.3.4/vendor/coddle-access/js/widget.min.js?utm_source=chatgpt.com",
+		});
+		const dirtySnippet = await plugin.routes.snippet.handler({}, dirtyCtx);
+		assert.equal(dirtySnippet.cdnConfigured, true);
+		assert.equal(dirtySnippet.cdnBaseUrl, CANONICAL_CDN_BASE_URL, "Obsolete coddle repo migrated to canonical");
+		assert.equal(dirtySnippet.scriptUrl, "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/js/widget.min.js");
+		assert.equal(dirtySnippet.fontsUrl, "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/fonts/");
+		assert.ok(!dirtySnippet.scriptUrl.includes("utm_source"), "utm_source must be stripped");
+		assert.ok(!dirtySnippet.scriptUrl.includes("coddle-accessibility"), "obsolete repo name must be stripped");
+		assert.ok(!dirtySnippet.scriptUrl.includes("v1.3.4"), "v1.3.4 must be updated to v1.3.6");
+		assert.ok(!dirtySnippet.cdnHtml.includes("utm_source"));
+		assert.ok(!dirtySnippet.dynamicLoader.includes("utm_source"));
+
+		// 2. Custom CDN with accidental file path, trailing slash, and search params
+		const customDirtyCtx = createMockCtx({
+			cdnBaseUrl: "https://my-cdn.org/assets/js/widget.min.js?v=2.0&utm_source=chatgpt.com",
+		});
+		const customDirtySnippet = await plugin.routes.snippet.handler({}, customDirtyCtx);
+		assert.equal(customDirtySnippet.cdnConfigured, true);
+		assert.equal(customDirtySnippet.cdnBaseUrl, "https://my-cdn.org/assets/");
+		assert.equal(customDirtySnippet.scriptUrl, "https://my-cdn.org/assets/js/widget.min.js");
+		assert.equal(customDirtySnippet.fontsUrl, "https://my-cdn.org/assets/fonts/");
+		assert.ok(!customDirtySnippet.scriptUrl.includes("widget.min.js/js/widget.min.js"), "No malformed concatenation");
+	});
+
+	test("Empty and invalid CDN values fall back cleanly to local asset mode without throwing", async () => {
+		const invalidCases = [
+			"",
+			"   ",
+			"local",
+			"none",
+			"http://insecure-cdn.org/assets", // Non-HTTPS rejected
+			"not-a-valid-url",
+		];
+
+		for (const badValue of invalidCases) {
+			const mockCtx = createMockCtx({
+				primaryColor: "#0D9488",
+				positionDesktop: "bottom-left",
+				language: "fr",
+				cdnBaseUrl: badValue,
+			});
+
+			const result = await plugin.routes.snippet.handler({}, mockCtx);
+			assert.equal(result.enabled, true);
+			assert.equal(result.mode, "local");
+			assert.equal(result.cdnConfigured, false);
+			assert.equal(result.cdnBaseUrl, "");
+			assert.equal(result.scriptUrl, "/vendor/accessibility-toolkit/js/widget.min.js");
+			assert.equal(result.fontsUrl, "/vendor/accessibility-toolkit/fonts/");
+			assert.equal(result.cdnHtml, null, "cdnHtml must be null in local mode");
+			assert.ok(result.html.includes("/vendor/accessibility-toolkit/js/widget.min.js"));
+			assert.ok(!result.html.includes('integrity="sha384-'), "Local script must not have SRI attribute");
+			assert.ok(!result.html.includes('crossorigin="anonymous"'), "Local script must not have crossorigin attribute");
+			assert.ok(result.dynamicLoader.includes("/vendor/accessibility-toolkit/js/widget.min.js"));
+			assert.ok(!result.dynamicLoader.includes("/vendor/coddle-access/"), "No legacy coddle paths");
+		}
 	});
 
 	test("SRI hash in plugin source matches exact published widget.min.js asset", () => {
 		const crypto = awaitImportCrypto();
-		const jsContent = fs.readFileSync(new URL("../vendor/coddle-access/js/widget.min.js", import.meta.url));
-		const actualHash = "sha384-" + crypto.createHash("sha384").update(jsContent).digest("base64");
+		const neutralContent = fs.readFileSync(new URL("../vendor/accessibility-toolkit/js/widget.min.js", import.meta.url));
+		const actualHash = "sha384-" + crypto.createHash("sha384").update(neutralContent).digest("base64");
+		assert.equal(actualHash, WIDGET_SRI_HASH);
 		assert.equal(actualHash, "sha384-PkHCo9yYYt43CM9mczXrTqkNN0ddgEpZos0hrTEP62/Iox7z6iWI3CfR06lzbWdK");
+
+		// Ensure legacy fallback asset matches as well
+		const legacyContent = fs.readFileSync(new URL("../vendor/coddle-access/js/widget.min.js", import.meta.url));
+		const legacyHash = "sha384-" + crypto.createHash("sha384").update(legacyContent).digest("base64");
+		assert.equal(legacyHash, WIDGET_SRI_HASH);
+	});
+
+	test("dynamicLoader: respects enabled=false and does not mount widget or load scripts", async () => {
+		const mockCtx = createMockCtx({ enabled: false });
+		const snippet = await plugin.routes.snippet.handler({}, mockCtx);
+		const code = snippet.dynamicLoader.replace("<script>", "").replace("</script>", "");
+
+		const elements = new Map();
+		const appended = [];
+		const sandbox = {
+			window: {},
+			setTimeout,
+			document: {
+				getElementById: (id) => elements.get(id) || null,
+				createElement: () => ({ id: "", src: "", onerror: null, appendChild: () => {} }),
+				body: { appendChild: (el) => { if (el.id) elements.set(el.id, el); appended.push(el); } },
+			},
+			fetch: async () => ({
+				ok: true,
+				json: async () => ({ enabled: false }),
+			}),
+			MutationObserver: class { observe() {} disconnect() {} },
+			console: { warn: () => {} },
+		};
+		sandbox.window = sandbox;
+
+		vm.runInNewContext(code, sandbox);
+		await new Promise((r) => setTimeout(r, 60));
+
+		assert.equal(appended.length, 0, "No script element should be appended when enabled=false");
+		assert.ok(!sandbox._cyA11yConfig, "No _cyA11yConfig should be set when enabled=false");
+	});
+
+	test("dynamicLoader: prevents duplicate initialization and duplicate script injection", async () => {
+		const mockCtx = createMockCtx();
+		const snippet = await plugin.routes.snippet.handler({}, mockCtx);
+		const code = snippet.dynamicLoader.replace("<script>", "").replace("</script>", "");
+
+		const elements = new Map();
+		const appended = [];
+		let fetchCallCount = 0;
+		const sandbox = {
+			window: {},
+			setTimeout,
+			document: {
+				getElementById: (id) => elements.get(id) || null,
+				createElement: () => ({ id: "", src: "", onerror: null, appendChild: () => {} }),
+				body: { appendChild: (el) => { if (el.id) elements.set(el.id, el); appended.push(el); } },
+			},
+			fetch: async () => {
+				fetchCallCount++;
+				return {
+					ok: true,
+					json: async () => ({
+						enabled: true,
+						cdnConfigured: true,
+						cdnBaseUrl: CANONICAL_CDN_BASE_URL,
+						scriptUrl: "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/js/widget.min.js",
+						fontsUrl: "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/fonts/",
+					}),
+				};
+			},
+			MutationObserver: class { observe() {} disconnect() {} },
+			console: { warn: () => {} },
+		};
+		sandbox.window = sandbox;
+
+		// First execution
+		vm.runInNewContext(code, sandbox);
+		await new Promise((r) => setTimeout(r, 60));
+
+		assert.equal(fetchCallCount, 1);
+		assert.equal(appended.length, 1);
+		assert.equal(sandbox.__accessibility_toolkit_initialized, true);
+
+		// Second execution (should be blocked by window.__accessibility_toolkit_initialized)
+		vm.runInNewContext(code, sandbox);
+		await new Promise((r) => setTimeout(r, 60));
+
+		assert.equal(fetchCallCount, 1, "fetch must not be called again");
+		assert.equal(appended.length, 1, "No duplicate script should be inserted");
+	});
+
+	test("dynamicLoader: configuration endpoint failure permits retry and does not permanently mark initialized", async () => {
+		const mockCtx = createMockCtx();
+		const snippet = await plugin.routes.snippet.handler({}, mockCtx);
+		const code = snippet.dynamicLoader.replace("<script>", "").replace("</script>", "");
+
+		const elements = new Map();
+		const appended = [];
+		let shouldFail = true;
+		const warnings = [];
+
+		const sandbox = {
+			window: {},
+			setTimeout,
+			document: {
+				getElementById: (id) => elements.get(id) || null,
+				createElement: () => ({ id: "", src: "", onerror: null, appendChild: () => {} }),
+				body: { appendChild: (el) => { if (el.id) elements.set(el.id, el); appended.push(el); } },
+			},
+			fetch: async () => {
+				if (shouldFail) {
+					return { ok: false, status: 500, json: async () => null };
+				}
+				return {
+					ok: true,
+					json: async () => ({
+						enabled: true,
+						cdnConfigured: true,
+						cdnBaseUrl: CANONICAL_CDN_BASE_URL,
+						scriptUrl: "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/js/widget.min.js",
+						fontsUrl: "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/fonts/",
+					}),
+				};
+			},
+			MutationObserver: class { observe() {} disconnect() {} },
+			console: { warn: (msg, err) => warnings.push({ msg, err }) },
+		};
+		sandbox.window = sandbox;
+
+		// 1. Initial attempt fails (HTTP 500)
+		vm.runInNewContext(code, sandbox);
+		await new Promise((r) => setTimeout(r, 60));
+
+		assert.equal(sandbox.__accessibility_toolkit_initialized, false, "Must reset initialized to false on config failure");
+		assert.equal(appended.length, 0, "No script injected on failure");
+
+		// 2. Retry succeeds
+		shouldFail = false;
+		vm.runInNewContext(code, sandbox);
+		await new Promise((r) => setTimeout(r, 60));
+
+		assert.equal(sandbox.__accessibility_toolkit_initialized, true, "Must mark initialized on successful retry");
+		assert.equal(appended.length, 1, "Script injected after successful retry");
+	});
+
+	test("dynamicLoader: CDN script failure attempts local fallback and prevents duplicate fallback scripts", async () => {
+		const mockCtx = createMockCtx();
+		const snippet = await plugin.routes.snippet.handler({}, mockCtx);
+		const code = snippet.dynamicLoader.replace("<script>", "").replace("</script>", "");
+
+		const elements = new Map();
+		const appended = [];
+		const warnings = [];
+
+		const sandbox = {
+			window: {},
+			setTimeout,
+			document: {
+				getElementById: (id) => elements.get(id) || null,
+				createElement: () => ({ id: "", src: "", onerror: null, appendChild: () => {} }),
+				body: { appendChild: (el) => { if (el.id) elements.set(el.id, el); appended.push(el); } },
+			},
+			fetch: async () => ({
+				ok: true,
+				json: async () => ({
+					enabled: true,
+					cdnConfigured: true,
+					cdnBaseUrl: CANONICAL_CDN_BASE_URL,
+					scriptUrl: "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/js/widget.min.js",
+					fontsUrl: "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/fonts/",
+				}),
+			}),
+			MutationObserver: class { observe() {} disconnect() {} },
+			console: { warn: (msg) => warnings.push(msg) },
+		};
+		sandbox.window = sandbox;
+
+		vm.runInNewContext(code, sandbox);
+		await new Promise((r) => setTimeout(r, 60));
+
+		assert.equal(appended.length, 1);
+		const primaryScript = appended[0];
+		assert.equal(primaryScript.id, "accessibility-toolkit-script");
+		assert.ok(primaryScript.src.includes("cdn.jsdelivr.net"));
+		assert.equal(typeof primaryScript.onerror, "function");
+
+		// Simulate CDN failure
+		primaryScript.onerror();
+		assert.equal(appended.length, 2, "Fallback script must be appended on CDN error");
+		const fallbackScript = appended[1];
+		assert.equal(fallbackScript.id, "accessibility-toolkit-script-fallback");
+		assert.equal(fallbackScript.src, "/vendor/accessibility-toolkit/js/widget.min.js");
+
+		// Simulate duplicate error event - must not append duplicate fallback
+		primaryScript.onerror();
+		assert.equal(appended.length, 2, "Must not append duplicate fallback script");
+
+		// Simulate fallback script failure - must reset initialized flag to allow retry
+		assert.equal(typeof fallbackScript.onerror, "function");
+		fallbackScript.onerror();
+		assert.equal(sandbox.__accessibility_toolkit_initialized, false, "Must reset initialized flag when fallback fails");
+	});
+
+	test("dynamicLoader: local mode configures local scripts and fonts without SRI attributes", async () => {
+		const mockCtx = createMockCtx({ cdnBaseUrl: "local" });
+		const snippet = await plugin.routes.snippet.handler({}, mockCtx);
+		const code = snippet.dynamicLoader.replace("<script>", "").replace("</script>", "");
+
+		const elements = new Map();
+		const appended = [];
+
+		const sandbox = {
+			window: {},
+			setTimeout,
+			document: {
+				getElementById: (id) => elements.get(id) || null,
+				createElement: () => ({ id: "", src: "", onerror: null, appendChild: () => {} }),
+				body: { appendChild: (el) => { if (el.id) elements.set(el.id, el); appended.push(el); } },
+			},
+			fetch: async () => ({
+				ok: true,
+				json: async () => ({
+					enabled: true,
+					cdnConfigured: false,
+					mode: "local",
+					cdnBaseUrl: "",
+					scriptUrl: "/vendor/accessibility-toolkit/js/widget.min.js",
+					fontsUrl: "/vendor/accessibility-toolkit/fonts/",
+				}),
+			}),
+			MutationObserver: class { observe() {} disconnect() {} },
+			console: { warn: () => {} },
+		};
+		sandbox.window = sandbox;
+
+		vm.runInNewContext(code, sandbox);
+		await new Promise((r) => setTimeout(r, 60));
+
+		assert.equal(appended.length, 1);
+		const s = appended[0];
+		assert.equal(s.src, "/vendor/accessibility-toolkit/js/widget.min.js");
+		assert.ok(!s.integrity, "Local script must not have integrity attribute");
+		assert.ok(!s.crossOrigin, "Local script must not have crossOrigin attribute");
+		assert.equal(sandbox._cyA11yAssets.fonts, "/vendor/accessibility-toolkit/fonts/");
 	});
 
 	test("status route returns active plugin health telemetry", async () => {
 		assert.ok(plugin.routes.status);
 		const result = await plugin.routes.status.handler({}, createMockCtx());
 		assert.equal(result.status, "active");
-		assert.equal(result.version, "1.3.5");
+		assert.equal(result.version, "1.3.6");
 		assert.equal(result.brand, "Accessibility Toolkit");
 		assert.equal(result.vendor, "EmDash Community");
 	});
@@ -442,7 +778,11 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 		});
 	});
 
-	test("page:fragments hook injects frontend script when enabled and returns empty array when disabled", async () => {
+	test("page:fragments hook definition (unit/native host only; stripped by EmDash sandbox proxy in registry installations)", async () => {
+		// Note: In production EmDash Registry installations, createSandboxedPluginProxy explicitly strips
+		// page:fragments (node_modules/emdash/src/plugins/sandbox/proxy.ts:70) to prevent untrusted
+		// worker isolates from injecting scripts into visitor HTML. Manual theme layout integration is required.
+		// This unit test verifies the fallback hook contract for non-sandboxed native integrations.
 		const enabledCtx = createMockCtx({
 			enabled: true,
 			primaryColor: "#0369A1",
@@ -640,6 +980,9 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 		assert.ok(a11yContent.includes("/_emdash/api/plugins/\" + encodeURIComponent(pluginId) + \"/config"), "Prioritizes explicit pluginId endpoint");
 		assert.ok(a11yContent.includes("onerror"), "Handles script load failure with fallback/warning");
 		assert.ok(coddleContent.includes("<AccessibilityWidget {...Astro.props} />"), "CoddleAccessWidget wraps AccessibilityWidget for backward compatibility");
+		// pluginId is optional: no hardcoded default installation ID and standalone fallback is supported
+		assert.ok(!a11yContent.includes('pluginId = "r_'), "AccessibilityWidget does not hardcode a specific registry ID");
+		assert.ok(a11yContent.includes("mountWidget(config);"), "AccessibilityWidget falls back to standalone mountWidget(config)");
 	});
 });
 

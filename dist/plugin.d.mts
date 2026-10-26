@@ -2,8 +2,8 @@ import { SandboxedPlugin } from "emdash/plugin";
 
 //#region src/plugin.d.ts
 declare const WIDGET_SRI_HASH = "sha384-PkHCo9yYYt43CM9mczXrTqkNN0ddgEpZos0hrTEP62/Iox7z6iWI3CfR06lzbWdK";
-declare const CANONICAL_CDN_BASE_URL = "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/";
-declare const DEFAULT_CDN_BASE_URL = "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/";
+declare const CANONICAL_CDN_BASE_URL = "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.5/vendor/accessibility-toolkit/";
+declare const DEFAULT_CDN_BASE_URL = "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.5/vendor/accessibility-toolkit/";
 declare const LOCAL_WIDGET_SCRIPT_PATH = "/vendor/accessibility-toolkit/js/widget.min.js";
 declare const LOCAL_FONTS_PATH = "/vendor/accessibility-toolkit/fonts/";
 declare const LEGACY_LOCAL_WIDGET_SCRIPT_PATH = "/vendor/coddle-access/js/widget.min.js";

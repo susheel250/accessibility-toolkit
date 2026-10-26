@@ -1,10 +1,14 @@
 ---
-// components/AccessibilityWidget.astro
+// src/components/AccessibilityWidget.astro
 // Supported EmDash Host Integration for Accessibility Toolkit
 // Loads dynamic configuration from the installed plugin and mounts the accessibility widget
 
+import { getDb } from "emdash/runtime";
+import { getPluginSettings } from "emdash";
+
 interface Props {
   pluginId?: string;
+  standalone?: boolean;
   enabled?: boolean;
   language?: string;
   primaryColor?: string;
@@ -23,7 +27,8 @@ interface Props {
 }
 
 const {
-  pluginId = "",
+  pluginId: propPluginId = "",
+  standalone = false,
   enabled = true,
   language = "en",
   primaryColor = "#1863DC",
@@ -32,7 +37,7 @@ const {
   positionDesktop = "bottom-right",
   positionMobile = "bottom-right",
   statementUrl = "",
-  cdnBaseUrl = "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/",
+  cdnBaseUrl = "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.5/vendor/accessibility-toolkit/",
   scriptSrc = "/vendor/accessibility-toolkit/js/widget.min.js",
   cdnSrc = "",
   fontsUrl = "",
@@ -41,28 +46,102 @@ const {
   website = "",
 } = Astro.props;
 
+// Dynamically resolve installed Registry plugin ID without hardcoding
+let activePluginId = (propPluginId || "").trim();
+let isPluginActive = true;
+let isPluginExplicitlyDisabled = false;
+let savedSettings: Record<string, any> | null = null;
+
+if (!activePluginId) {
+  const envId = (import.meta.env.PUBLIC_ACCESSIBILITY_PLUGIN_ID || import.meta.env.ACCESSIBILITY_PLUGIN_ID || "").trim();
+  if (envId) {
+    activePluginId = envId;
+  } else {
+    try {
+      const db = await getDb();
+      if (db) {
+        const row = await db
+          .selectFrom("_plugin_state")
+          .select(["plugin_id", "status", "registry_slug", "display_name"])
+          .where((eb: any) =>
+            eb.or([
+              eb("registry_slug", "=", "accessibility-toolkit"),
+              eb("plugin_id", "=", "accessibility-toolkit"),
+              eb.and([
+                eb("plugin_id", "like", "r_%"),
+                eb.or([
+                  eb("display_name", "like", "%Accessibility%"),
+                  eb("registry_slug", "like", "%accessibility%"),
+                ]),
+              ]),
+            ])
+          )
+          .where("status", "=", "active")
+          .executeTakeFirst();
+
+        if (row?.plugin_id) {
+          activePluginId = row.plugin_id;
+        } else {
+          isPluginActive = false;
+        }
+      }
+    } catch {
+      // In case DB is unavailable during certain SSR phases, do not hard fail
+    }
+  }
+}
+
+// If we resolved an active plugin ID, check saved plugin settings to verify enablement
+if (activePluginId) {
+  try {
+    savedSettings = await getPluginSettings(activePluginId);
+    if (savedSettings && typeof savedSettings === "object") {
+      if (savedSettings.enabled === false) {
+        isPluginExplicitlyDisabled = true;
+      }
+    }
+  } catch {
+    // If getPluginSettings fails, the client loader will still check the endpoint
+  }
+}
+
+// In standard plugin mode:
+// 1. Must be enabled via prop
+// 2. Not explicitly disabled in plugin admin settings
+// 3. Either standalone mode, or active plugin detected
+const shouldRender = enabled && !isPluginExplicitlyDisabled && (standalone || (isPluginActive && Boolean(activePluginId)));
+
+const activePrimaryColor = savedSettings?.primaryColor ?? primaryColor;
+const activeIconId = savedSettings?.iconId ?? iconId;
+const activeIconSize = Number(savedSettings?.iconSize ?? iconSize);
+const activePosDesktop = savedSettings?.positionDesktop ?? positionDesktop;
+const activePosMobile = savedSettings?.positionMobile ?? positionMobile;
+const activeLanguage = savedSettings?.language ?? language;
+const activeCdnBaseUrl = savedSettings?.cdnBaseUrl ?? cdnBaseUrl;
+const activeStatementUrl = savedSettings?.statementUrl ?? statementUrl;
+
 const config = {
   status: {
     mobile: true,
     desktop: true,
   },
-  iconId: iconId,
-  iconSize: Number(iconSize),
+  iconId: activeIconId,
+  iconSize: activeIconSize,
   label: "Accessibility menu",
   heading: "Accessibility Toolkit",
   position: {
-    mobile: positionMobile,
-    desktop: positionDesktop,
+    mobile: activePosMobile,
+    desktop: activePosDesktop,
   },
   language: {
-    default: language,
+    default: activeLanguage,
     selected: [],
   },
   margins: {
     desktop: { top: 20, bottom: 20, left: 20, right: 20 },
     mobile: { top: 20, bottom: 20, left: 20, right: 20 },
   },
-  primaryColor: primaryColor,
+  primaryColor: activePrimaryColor,
   keyboard: {
     enabled: true,
     shortcut: "alt+a",
@@ -92,8 +171,8 @@ const config = {
       bigCursor: { enabled: true },
     },
     statement: {
-      enabled: Boolean(statementUrl),
-      url: statementUrl,
+      enabled: Boolean(activeStatementUrl),
+      url: activeStatementUrl,
       displayInWidget: false,
       generatedDate: "",
       formData: {
@@ -111,12 +190,15 @@ const config = {
 };
 ---
 
-{enabled && (
-  <script is:inline define:vars={{ config, cdnBaseUrl, fontsUrl, scriptSrc, cdnSrc, integrity, pluginId }}>
+{shouldRender && (
+  <script is:inline id="accessibility-toolkit-loader" data-plugin-id={activePluginId} define:vars={{ config, cdnBaseUrl: activeCdnBaseUrl, fontsUrl, scriptSrc, cdnSrc, integrity, pluginId: activePluginId, standalone }}>
     // @ts-nocheck
     (function() {
       // Prevent duplicate script loading and initialization
       if (window.__accessibility_toolkit_initialized) {
+        return;
+      }
+      if (document.getElementById("accessibility-toolkit-script")) {
         return;
       }
       window.__accessibility_toolkit_initialized = true;
@@ -125,17 +207,17 @@ const config = {
         if (!val || typeof val !== "string") return "";
         var t = val.trim();
         if (!t || t.toLowerCase() === "local" || t.toLowerCase() === "none") return "";
-        if (t.toLowerCase() === "default") return "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/";
+        if (t.toLowerCase() === "default") return "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.5/vendor/accessibility-toolkit/";
         try {
           var u = new URL(t);
           if (u.protocol !== "https:") return "";
           u.search = "";
           u.hash = "";
           var low = u.href.toLowerCase();
-          if (low.indexOf("coddle-accessibility") !== -1 || low.indexOf("coddle-access") !== -1 || low.indexOf("@v1.3.4") !== -1 || low.indexOf("@v1.3.5") !== -1) {
-            return "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit";
+          if (low.indexOf("coddle-accessibility") !== -1 || low.indexOf("coddle-access") !== -1 || low.indexOf("@v1.3.4") !== -1 || low.indexOf("@v1.3.6") !== -1) {
+            return "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.5/vendor/accessibility-toolkit";
           }
-          var p = u.pathname.replace(/\/+(js(\/widget(\.min)?\.js)?|fonts)\/?$/, "").replace(/\/+$/, "");
+          var p = u.pathname.replace(/[/]+(js([/]widget([.]min)?[.]js)?|fonts)[/]?$/, "").replace(/[/]+$/, "");
           return u.origin + p;
         } catch(e) {
           return "";
@@ -190,7 +272,7 @@ const config = {
           fonts: activeFontsUrl
         };
 
-        if (document.getElementById("accessibility-toolkit-script")) {
+        if (document.getElementById("accessibility-toolkit-script") || document.getElementById("accessibility-toolkit-script-fallback")) {
           return;
         }
 
@@ -271,11 +353,14 @@ const config = {
 
       function tryEndpoint(idx) {
         if (idx >= endpoints.length) {
-          if (pluginId) {
-            console.warn("[Accessibility Toolkit] Plugin endpoint unreachable for pluginId: " + pluginId + ". Falling back to standalone mode.");
+          if (standalone) {
+            // Explicit opt-in for standalone mode without backend plugin
+            mountWidget(config);
+          } else {
+            // In standard plugin mode: uninstalled or unreachable, do not mount
+            window.__accessibility_toolkit_initialized = false;
+            console.warn("[Accessibility Toolkit] No active configuration endpoint responded (" + endpoints.join(", ") + "). Widget will not be mounted.");
           }
-          // Mount in standalone mode with component props or defaults
-          mountWidget(config);
           return;
         }
         fetch(endpoints[idx])
@@ -288,6 +373,8 @@ const config = {
             if (data && typeof data === "object") {
               // Master toggle check: if disabled in plugin settings, halt immediately
               if (data.enabled === false) {
+                window.__accessibility_toolkit_initialized = false;
+                console.info("[Accessibility Toolkit] Plugin is installed but explicitly disabled in settings.");
                 return;
               }
               var merged = JSON.parse(JSON.stringify(config));

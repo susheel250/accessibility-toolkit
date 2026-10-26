@@ -2,7 +2,7 @@
 
 A comprehensive, zero-dependency accessibility toolbar plugin for [EmDash CMS](https://emdashcms.com) websites. Helps site owners comply with **WCAG 2.2 Level AA** and **ADA Section 508** standards through an accessible, visitor-driven assistive toolbar rendered in an isolated Shadow DOM.
 
-Package identifier: `@susheel-k.bsky.social/accessibility-toolkit` (version `1.3.6`)
+Package identifier: `@susheel-k.bsky.social/accessibility-toolkit` (version `1.3.5`)
 
 ---
 
@@ -45,15 +45,15 @@ In EmDash CMS, the `page:fragments` hook (which injects raw HTML fragments into 
 
 The Accessibility Toolkit supports zero-copy frontend asset distribution via a production HTTPS CDN:
 
-- **CDN Provider:** jsdelivr Global CDN (backed by immutable version tag `v1.3.6`)
-- **Verified Base URL:** `https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit`
-- **Production Script:** `https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/js/widget.min.js`
+- **CDN Provider:** jsdelivr Global CDN (backed by immutable version tag `v1.3.5`)
+- **Verified Base URL:** `https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.5/vendor/accessibility-toolkit`
+- **Production Script:** `https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.5/vendor/accessibility-toolkit/js/widget.min.js`
   - **Subresource Integrity (SRI):** `integrity="sha384-PkHCo9yYYt43CM9mczXrTqkNN0ddgEpZos0hrTEP62/Iox7z6iWI3CfR06lzbWdK"`
   - **CORS:** `access-control-allow-origin: *`
   - **Cache Header:** `cache-control: public, max-age=31536000, s-maxage=31536000, immutable`
 - **Production Fonts:**
-  - WOFF: `https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/fonts/OpenDyslexic3-Regular.woff`
-  - TTF: `https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/fonts/OpenDyslexic3-Regular.ttf`
+  - WOFF: `https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.5/vendor/accessibility-toolkit/fonts/OpenDyslexic3-Regular.woff`
+  - TTF: `https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.5/vendor/accessibility-toolkit/fonts/OpenDyslexic3-Regular.ttf`
 
 ### Zero-Copy Installation Flow
 When using the dynamic snippet, fresh EmDash projects do **not** need to manually copy assets into `public/vendor/`. The widget script and fonts are loaded dynamically from the CDN with cryptographic SRI verification.
@@ -76,7 +76,7 @@ Because EmDash executes plugins in a secure worker sandbox, plugins cannot direc
   if (window.__accessibility_toolkit_initialized) return;
   window.__accessibility_toolkit_initialized = true;
 
-  var cdn = 'https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit';
+  var cdn = 'https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.5/vendor/accessibility-toolkit';
   window._cyA11yConfig = {
     primaryColor: '#1863DC',
     position: { desktop: 'bottom-right', mobile: 'bottom-right' },

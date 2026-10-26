@@ -3,7 +3,7 @@ import type { SandboxedPlugin } from "emdash/plugin";
 export const WIDGET_SRI_HASH = "sha384-PkHCo9yYYt43CM9mczXrTqkNN0ddgEpZos0hrTEP62/Iox7z6iWI3CfR06lzbWdK";
 
 export const CANONICAL_CDN_BASE_URL =
-	"https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/";
+	"https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.5/vendor/accessibility-toolkit/";
 
 export const DEFAULT_CDN_BASE_URL = CANONICAL_CDN_BASE_URL;
 
@@ -745,7 +745,7 @@ const plugin: SandboxedPlugin = {
 					mode: cdnConfig.mode,
 					scriptUrl: cdnConfig.scriptUrl,
 					fontsUrl: cdnConfig.fontsUrl,
-					version: "1.3.6",
+					version: "1.3.5",
 					toolkit: "Accessibility Toolkit",
 					publisher: "EmDash Community",
 					sri: WIDGET_SRI_HASH,
@@ -917,7 +917,7 @@ const plugin: SandboxedPlugin = {
 				return {
 					status: "active",
 					pluginId: ctx.plugin.id,
-					version: "1.3.6",
+					version: "1.3.5",
 					brand: "Accessibility Toolkit",
 					vendor: "EmDash Community",
 					website: "https://emdashcms.com",

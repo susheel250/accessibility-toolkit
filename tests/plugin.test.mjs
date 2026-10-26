@@ -60,7 +60,7 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 		const manifest = JSON.parse(jsonClean);
 
 		assert.equal(manifest.slug, "accessibility-toolkit");
-		assert.equal(manifest.version, "1.3.6");
+		assert.equal(manifest.version, "1.3.5");
 		assert.equal(manifest.license, "MIT");
 		assert.equal(manifest.name, "Accessibility Toolkit");
 		assert.ok(manifest.publisher.startsWith("did:plc:"));
@@ -263,7 +263,7 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 		assert.equal(result.positionDesktop, "bottom-right");
 		assert.equal(result.positionMobile, "bottom-right");
 		assert.equal(result.language, "en");
-		assert.equal(result.version, "1.3.6");
+		assert.equal(result.version, "1.3.5");
 		assert.equal(result.toolkit, "Accessibility Toolkit");
 	});
 
@@ -283,13 +283,13 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 		assert.equal(freshSnippet.mode, "cdn");
 		assert.equal(freshSnippet.cdnConfigured, true);
 		assert.equal(freshSnippet.cdnBaseUrl, CANONICAL_CDN_BASE_URL);
-		assert.equal(freshSnippet.scriptUrl, "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/js/widget.min.js");
-		assert.equal(freshSnippet.fontsUrl, "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/fonts/");
+		assert.equal(freshSnippet.scriptUrl, "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.5/vendor/accessibility-toolkit/js/widget.min.js");
+		assert.equal(freshSnippet.fontsUrl, "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.5/vendor/accessibility-toolkit/fonts/");
 		assert.equal(freshSnippet.sri, WIDGET_SRI_HASH);
 
 		// Verified HTML and cdnHtml agreement
 		assert.ok(freshSnippet.cdnHtml);
-		assert.ok(freshSnippet.cdnHtml.includes(`src="https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/js/widget.min.js"`));
+		assert.ok(freshSnippet.cdnHtml.includes(`src="https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.5/vendor/accessibility-toolkit/js/widget.min.js"`));
 		assert.ok(freshSnippet.cdnHtml.includes(`integrity="${WIDGET_SRI_HASH}"`));
 		assert.ok(freshSnippet.cdnHtml.includes('crossorigin="anonymous"'));
 		assert.equal(freshSnippet.html, freshSnippet.cdnHtml, "html and cdnHtml must agree when CDN is configured");
@@ -307,8 +307,8 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 		assert.equal(defaultSnippet.mode, "cdn");
 		assert.equal(defaultSnippet.cdnConfigured, true);
 		assert.equal(defaultSnippet.cdnBaseUrl, CANONICAL_CDN_BASE_URL);
-		assert.equal(defaultSnippet.scriptUrl, "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/js/widget.min.js");
-		assert.equal(defaultSnippet.fontsUrl, "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/fonts/");
+		assert.equal(defaultSnippet.scriptUrl, "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.5/vendor/accessibility-toolkit/js/widget.min.js");
+		assert.equal(defaultSnippet.fontsUrl, "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.5/vendor/accessibility-toolkit/fonts/");
 	});
 
 	test("snippet route generates clean versioned CDN URLs with SRI attributes for custom CDN configuration", async () => {
@@ -316,18 +316,18 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 			primaryColor: "#1863DC",
 			positionDesktop: "bottom-right",
 			language: "en",
-			cdnBaseUrl: "https://cdn.example.com/accessibility-toolkit/v1.3.6",
+			cdnBaseUrl: "https://cdn.example.com/accessibility-toolkit/v1.3.5",
 		});
 
 		const result = await plugin.routes.snippet.handler({}, mockCtx);
 		assert.equal(result.enabled, true);
 		assert.equal(result.mode, "cdn");
 		assert.equal(result.cdnConfigured, true);
-		assert.equal(result.cdnBaseUrl, "https://cdn.example.com/accessibility-toolkit/v1.3.6/");
-		assert.equal(result.scriptUrl, "https://cdn.example.com/accessibility-toolkit/v1.3.6/js/widget.min.js");
-		assert.equal(result.fontsUrl, "https://cdn.example.com/accessibility-toolkit/v1.3.6/fonts/");
+		assert.equal(result.cdnBaseUrl, "https://cdn.example.com/accessibility-toolkit/v1.3.5/");
+		assert.equal(result.scriptUrl, "https://cdn.example.com/accessibility-toolkit/v1.3.5/js/widget.min.js");
+		assert.equal(result.fontsUrl, "https://cdn.example.com/accessibility-toolkit/v1.3.5/fonts/");
 		assert.ok(result.cdnHtml);
-		assert.ok(result.cdnHtml.includes("https://cdn.example.com/accessibility-toolkit/v1.3.6/js/widget.min.js"));
+		assert.ok(result.cdnHtml.includes("https://cdn.example.com/accessibility-toolkit/v1.3.5/js/widget.min.js"));
 		assert.ok(result.cdnHtml.includes(`integrity="${WIDGET_SRI_HASH}"`));
 		assert.ok(result.cdnHtml.includes('crossorigin="anonymous"'));
 		assert.equal(result.html, result.cdnHtml);
@@ -341,11 +341,11 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 		const dirtySnippet = await plugin.routes.snippet.handler({}, dirtyCtx);
 		assert.equal(dirtySnippet.cdnConfigured, true);
 		assert.equal(dirtySnippet.cdnBaseUrl, CANONICAL_CDN_BASE_URL, "Obsolete coddle repo migrated to canonical");
-		assert.equal(dirtySnippet.scriptUrl, "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/js/widget.min.js");
-		assert.equal(dirtySnippet.fontsUrl, "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/fonts/");
+		assert.equal(dirtySnippet.scriptUrl, "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.5/vendor/accessibility-toolkit/js/widget.min.js");
+		assert.equal(dirtySnippet.fontsUrl, "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.5/vendor/accessibility-toolkit/fonts/");
 		assert.ok(!dirtySnippet.scriptUrl.includes("utm_source"), "utm_source must be stripped");
 		assert.ok(!dirtySnippet.scriptUrl.includes("coddle-accessibility"), "obsolete repo name must be stripped");
-		assert.ok(!dirtySnippet.scriptUrl.includes("v1.3.4"), "v1.3.4 must be updated to v1.3.6");
+		assert.ok(!dirtySnippet.scriptUrl.includes("v1.3.4"), "v1.3.4 must be updated to v1.3.5");
 		assert.ok(!dirtySnippet.cdnHtml.includes("utm_source"));
 		assert.ok(!dirtySnippet.dynamicLoader.includes("utm_source"));
 
@@ -463,8 +463,8 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 						enabled: true,
 						cdnConfigured: true,
 						cdnBaseUrl: CANONICAL_CDN_BASE_URL,
-						scriptUrl: "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/js/widget.min.js",
-						fontsUrl: "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/fonts/",
+						scriptUrl: "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.5/vendor/accessibility-toolkit/js/widget.min.js",
+						fontsUrl: "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.5/vendor/accessibility-toolkit/fonts/",
 					}),
 				};
 			},
@@ -517,8 +517,8 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 						enabled: true,
 						cdnConfigured: true,
 						cdnBaseUrl: CANONICAL_CDN_BASE_URL,
-						scriptUrl: "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/js/widget.min.js",
-						fontsUrl: "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/fonts/",
+						scriptUrl: "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.5/vendor/accessibility-toolkit/js/widget.min.js",
+						fontsUrl: "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.5/vendor/accessibility-toolkit/fonts/",
 					}),
 				};
 			},
@@ -566,8 +566,8 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 					enabled: true,
 					cdnConfigured: true,
 					cdnBaseUrl: CANONICAL_CDN_BASE_URL,
-					scriptUrl: "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/js/widget.min.js",
-					fontsUrl: "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.6/vendor/accessibility-toolkit/fonts/",
+					scriptUrl: "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.5/vendor/accessibility-toolkit/js/widget.min.js",
+					fontsUrl: "https://cdn.jsdelivr.net/gh/susheel250/accessibility-toolkit@v1.3.5/vendor/accessibility-toolkit/fonts/",
 				}),
 			}),
 			MutationObserver: class { observe() {} disconnect() {} },
@@ -648,7 +648,7 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 		assert.ok(plugin.routes.status);
 		const result = await plugin.routes.status.handler({}, createMockCtx());
 		assert.equal(result.status, "active");
-		assert.equal(result.version, "1.3.6");
+		assert.equal(result.version, "1.3.5");
 		assert.equal(result.brand, "Accessibility Toolkit");
 		assert.equal(result.vendor, "EmDash Community");
 	});
@@ -982,7 +982,8 @@ describe("Accessibility Toolkit - Comprehensive Test Suite", () => {
 		assert.ok(coddleContent.includes("<AccessibilityWidget {...Astro.props} />"), "CoddleAccessWidget wraps AccessibilityWidget for backward compatibility");
 		// pluginId is optional: no hardcoded default installation ID and standalone fallback is supported
 		assert.ok(!a11yContent.includes('pluginId = "r_'), "AccessibilityWidget does not hardcode a specific registry ID");
-		assert.ok(a11yContent.includes("mountWidget(config);"), "AccessibilityWidget falls back to standalone mountWidget(config)");
+		assert.ok(a11yContent.includes("mountWidget(config);"), "AccessibilityWidget supports standalone mode when explicitly enabled");
+		assert.ok(a11yContent.includes("No active configuration endpoint responded"), "AccessibilityWidget does not mount when endpoints fail and not standalone");
 	});
 });
 
